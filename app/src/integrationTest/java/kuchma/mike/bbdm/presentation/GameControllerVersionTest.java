@@ -16,6 +16,7 @@ import org.tabletest.junit.TableTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @SpringBootTest
@@ -58,6 +59,13 @@ class GameControllerVersionTest {
     }
 
     @Test
+    void shouldRequireTheApiVersionHeaderForApiRequests() throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/game")).andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
     void shouldReturnTheStartedGamePayloadForTheApiVersionRequestHeader() throws Exception {
         when(gameGateway.startGame()).thenReturn(new StartedGame("game-1", 3, 10, 1, 0, 0, 0));
 
@@ -66,5 +74,16 @@ class GameControllerVersionTest {
 
         assertThat(result.getResponse().getContentAsString())
             .matches("(?s).*\"gameId\"\\s*:\\s*\"game-1\".*");
+    }
+
+    @TableTest("""
+        path
+        "/game"
+        "/scripting-adventure"
+        """)
+    void shouldForwardFrontendRoutesToTheApplicationEntryPoint(String path) throws Exception {
+        MvcResult result = mockMvc.perform(get(path)).andReturn();
+
+        assertThat(result.getResponse().getForwardedUrl()).isEqualTo("/index.html");
     }
 }

@@ -1,0 +1,9 @@
+.git
+.gradle
+.idea
+.kotlin
+**/build
+web/node_modules
+web/dist
+web/coverage
+**/application-local*.yaml
