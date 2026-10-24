@@ -1,18 +1,18 @@
 package kuchma.mike.bbdm.infrastructure.client;
 
+import java.util.List;
+
 import kuchma.mike.bbdm.domain.model.GameId;
+import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.ItemId;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
 import kuchma.mike.bbdm.domain.model.MessageId;
-import kuchma.mike.bbdm.domain.model.MessageDecision;
-import kuchma.mike.bbdm.domain.model.MessageBoard;
 import kuchma.mike.bbdm.domain.model.MessageResolution;
 import kuchma.mike.bbdm.domain.model.Reputation;
-import kuchma.mike.bbdm.domain.model.ShopInventory;
+import kuchma.mike.bbdm.domain.model.ShopItem;
 import kuchma.mike.bbdm.domain.model.StartedGame;
 
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
@@ -34,20 +34,16 @@ public interface DragonsOfMugloarRestClient {
     Reputation getReputation(@PathVariable("gameId") GameId gameId);
 
     @GetExchange("/{" + GAME_ID_PATH_VARIABLE + "}/messages")
-    MessageBoard getMessages(@PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId);
+    List<GameMessage> getMessages(@PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId);
 
-    @PostExchange(
-        url = "/{" + GAME_ID_PATH_VARIABLE + "}/solve/{" + MESSAGE_ID_PATH_VARIABLE + "}",
-        contentType = APPLICATION_JSON_VALUE
-    )
+    @PostExchange(url = "/{" + GAME_ID_PATH_VARIABLE + "}/solve/{" + MESSAGE_ID_PATH_VARIABLE + "}")
     MessageResolution dealWithMessage(
         @PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId,
-        @PathVariable(MESSAGE_ID_PATH_VARIABLE) MessageId messageId,
-        @RequestBody MessageDecision decision
+        @PathVariable(MESSAGE_ID_PATH_VARIABLE) MessageId messageId
     );
 
     @GetExchange("/{" + GAME_ID_PATH_VARIABLE + "}/shop")
-    ShopInventory getShop(@PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId);
+    List<ShopItem> getShop(@PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId);
 
     @PostExchange("/{" + GAME_ID_PATH_VARIABLE + "}/shop/buy/{" + ITEM_ID_PATH_VARIABLE + "}")
     ItemPurchaseResult buyItem(

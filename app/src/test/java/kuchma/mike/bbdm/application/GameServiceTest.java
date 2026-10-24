@@ -5,7 +5,6 @@ import java.util.List;
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
 import kuchma.mike.bbdm.domain.model.MessageBoard;
-import kuchma.mike.bbdm.domain.model.MessageDecision;
 import kuchma.mike.bbdm.domain.model.MessageId;
 import kuchma.mike.bbdm.domain.model.MessageResolution;
 import kuchma.mike.bbdm.domain.model.ShopInventory;
@@ -16,34 +15,31 @@ import kuchma.mike.bbdm.domain.port.GameGateway;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GameServiceTest {
     private static final String GAME_ID = "game-1";
 
     @Test
-    void shouldRecordTheGatewayInteractionForSuccessfulMessageDecision() {
-        RecordingGameGateway gateway = new RecordingGameGateway();
-        GameService gameService = new GameService(gateway);
+    void shouldRecordTheGatewayInteractionForMessageResolution() {
+        final RecordingGameGateway gateway = new RecordingGameGateway();
+        final GameService gameService = new GameService(gateway);
 
-        gameService.dealWithMessage(new GameId(GAME_ID), new MessageId("message-1"), new DealMessageCommand("true"));
+        gameService.dealWithMessage(new GameId(GAME_ID), new MessageId("message-1"));
 
         assertThat(gateway.interaction())
             .returns(GAME_ID, GatewayInteraction::gameId)
-            .returns("message-1", GatewayInteraction::messageId)
-            .returns(new MessageDecision(true), GatewayInteraction::decision);
+            .returns("message-1", GatewayInteraction::messageId);
     }
 
     @Test
     void shouldReturnTheResolvedMessageOutcome() {
-        RecordingGameGateway gateway = new RecordingGameGateway();
-        GameService gameService = new GameService(gateway);
+        final RecordingGameGateway gateway = new RecordingGameGateway();
+        final GameService gameService = new GameService(gateway);
 
-        MessageResolution result =
+        final MessageResolution result =
             gameService.dealWithMessage(
                 new GameId(GAME_ID),
-                new MessageId("message-1"),
-                new DealMessageCommand("true")
+                new MessageId("message-1")
             );
 
         assertThat(result)
@@ -56,21 +52,7 @@ class GameServiceTest {
             .returns("Result", MessageResolution::message);
     }
 
-    @Test
-    void shouldRejectInvalidMessageDecisionsBeforeCallingTheGateway() {
-        RecordingGameGateway gateway = new RecordingGameGateway();
-        GameService gameService = new GameService(gateway);
-
-        assertThatThrownBy(
-            () -> gameService.dealWithMessage(
-                new GameId("game-1"),
-                new MessageId("message-1"),
-                new DealMessageCommand("maybe")
-            )
-        ).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    private record GatewayInteraction(String gameId, String messageId, MessageDecision decision) {
+    private record GatewayInteraction(String gameId, String messageId) {
     }
 
     private static final class RecordingGameGateway implements GameGateway {
@@ -82,23 +64,23 @@ class GameServiceTest {
         }
 
         @Override
-        public MessageBoard getMessages(GameId gameId) {
+        public MessageBoard getMessages(final GameId gameId) {
             return new MessageBoard(List.of());
         }
 
         @Override
-        public MessageResolution dealWithMessage(GameId gameId, MessageId messageId, MessageDecision decision) {
-            this.interaction = new GatewayInteraction(gameId.value(), messageId.value(), decision);
+        public MessageResolution dealWithMessage(final GameId gameId, final MessageId messageId) {
+            interaction = new GatewayInteraction(gameId.value(), messageId.value());
             return new MessageResolution(true, 2, 42, 8, 12, 3, "Result");
         }
 
         @Override
-        public ShopInventory getShop(GameId gameId) {
+        public ShopInventory getShop(final GameId gameId) {
             return new ShopInventory(List.of());
         }
 
         @Override
-        public ItemPurchaseResult buyItem(GameId gameId, ShopItemId itemId) {
+        public ItemPurchaseResult buyItem(final GameId gameId, final ShopItemId itemId) {
             return new ItemPurchaseResult(true, 5, 3, 1, 2);
         }
 

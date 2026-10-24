@@ -58,13 +58,13 @@
         game = { ...game, ...update, gameId: update.gameId ?? game.gameId };
     }
 
-    async function dealWithMessage(action: boolean) {
+    async function dealWithMessage() {
         if (!selectedMessage || !game || busy) return;
         busy = true;
         error = "";
         result = "";
         try {
-            const outcome = await resolveMessage(game.gameId, selectedMessage.adId, action);
+            const outcome = await resolveMessage(game.gameId, selectedMessage.adId);
             updateGame(outcome);
             result = outcome.message ?? outcome.result ?? "The message has been resolved.";
             selectedMessage = null;
@@ -220,12 +220,10 @@
                 {#if selectedMessage.probability}
                     <span>Probability <strong>{selectedMessage.probability}</strong></span>{/if}
             </div>
-            <p class="modal-prompt">Will you take on this task?</p>
+            <p class="modal-prompt">Ready to resolve this task?</p>
             <div class="modal-actions">
                 <button class="primary-button" disabled={busy}
-                        on:click={() => dealWithMessage(true)}>{busy ? "Working…" : "Accept the challenge"}</button>
-                <button class="quiet-button" disabled={busy} on:click={() => dealWithMessage(false)}>Pass this time
-                </button>
+                        on:click={dealWithMessage}>{busy ? "Working…" : "Resolve the task"}</button>
             </div>
         </div>
     </div>

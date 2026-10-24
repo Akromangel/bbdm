@@ -1,13 +1,16 @@
 package kuchma.mike.bbdm.infrastructure.adapter;
 
+import java.util.List;
+
 import kuchma.mike.bbdm.domain.model.GameId;
+import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.ItemId;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
 import kuchma.mike.bbdm.domain.model.MessageBoard;
-import kuchma.mike.bbdm.domain.model.MessageDecision;
 import kuchma.mike.bbdm.domain.model.MessageId;
 import kuchma.mike.bbdm.domain.model.MessageResolution;
 import kuchma.mike.bbdm.domain.model.ShopInventory;
+import kuchma.mike.bbdm.domain.model.ShopItem;
 import kuchma.mike.bbdm.domain.model.ShopItemId;
 import kuchma.mike.bbdm.domain.model.StartedGame;
 import kuchma.mike.bbdm.domain.port.GameGateway;
@@ -30,25 +33,19 @@ public class DragonsOfMugloarGameGateway implements GameGateway {
 
     @Override
     public MessageBoard getMessages(final GameId gameId) {
-        return restClient.getMessages(gameId);
+        List<GameMessage> messages = restClient.getMessages(gameId);
+        return new MessageBoard(messages);
     }
 
     @Override
-    public MessageResolution dealWithMessage(
-        final GameId gameId,
-        final MessageId messageId,
-        final MessageDecision decision
-    ) {
-        return restClient.dealWithMessage(
-            gameId,
-            messageId,
-            decision
-        );
+    public MessageResolution dealWithMessage(final GameId gameId, final MessageId messageId) {
+        return restClient.dealWithMessage(gameId, messageId);
     }
 
     @Override
     public ShopInventory getShop(final GameId gameId) {
-        return restClient.getShop(gameId);
+        List<ShopItem> items = restClient.getShop(gameId);
+        return new ShopInventory(items);
     }
 
     @Override

@@ -65,7 +65,7 @@ describe("game API", () => {
         ]);
     });
 
-    it("sends message actions as string values and purchases the encoded item", async () => {
+    it("resolves a message without a request body and purchases the encoded item", async () => {
         const fetchMock = vi
             .fn()
             .mockResolvedValueOnce(
@@ -76,16 +76,16 @@ describe("game API", () => {
             );
         vi.stubGlobal("fetch", fetchMock);
 
-        await resolveMessage("game-1", "ad/1", true);
+        await resolveMessage("game-1", "ad/1");
         await purchaseItem("game-1", { id: "health potion" });
 
         expect(fetchMock.mock.calls[0]).toEqual([
             "/api/game-1/messages/ad%2F1",
             expect.objectContaining({
                 method: "POST",
-                body: JSON.stringify({ action: "true" }),
             }),
         ]);
+        expect(fetchMock.mock.calls[0][1]).not.toHaveProperty("body");
         expect(fetchMock.mock.calls[1]).toEqual([
             "/api/game-1/shop/health%20potion",
             expect.objectContaining({ method: "POST" }),

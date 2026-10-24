@@ -3,7 +3,6 @@ package kuchma.mike.bbdm.domain.port;
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
 import kuchma.mike.bbdm.domain.model.MessageBoard;
-import kuchma.mike.bbdm.domain.model.MessageDecision;
 import kuchma.mike.bbdm.domain.model.MessageId;
 import kuchma.mike.bbdm.domain.model.MessageResolution;
 import kuchma.mike.bbdm.domain.model.ShopInventory;
@@ -15,7 +14,7 @@ public interface GameGateway {
 
     MessageBoard getMessages(GameId gameId);
 
-    MessageResolution dealWithMessage(GameId gameId, MessageId messageId, MessageDecision decision);
+    MessageResolution dealWithMessage(GameId gameId, MessageId messageId);
 
     ShopInventory getShop(GameId gameId);
 

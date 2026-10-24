@@ -6,12 +6,9 @@ import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.ItemId;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
-import kuchma.mike.bbdm.domain.model.MessageBoard;
-import kuchma.mike.bbdm.domain.model.MessageDecision;
 import kuchma.mike.bbdm.domain.model.MessageId;
 import kuchma.mike.bbdm.domain.model.MessageResolution;
 import kuchma.mike.bbdm.domain.model.Reputation;
-import kuchma.mike.bbdm.domain.model.ShopInventory;
 import kuchma.mike.bbdm.domain.model.ShopItem;
 import kuchma.mike.bbdm.domain.model.StartedGame;
 
@@ -26,7 +23,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.absent;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
@@ -73,7 +70,7 @@ class DragonsOfMugloarRestClientTest {
     void shouldDeserializeTheCreatedGameResponse() {
         wireMockServer.stubFor(post(urlEqualTo(START_GAME_PATH)).willReturn(okJson(START_GAME_RESPONSE)));
 
-        DragonsOfMugloarRestClient client = createClient();
+        final DragonsOfMugloarRestClient client = createClient();
 
         assertThat(client.startGame())
             .satisfies(_ -> wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v2/game/start"))))
@@ -97,7 +94,7 @@ class DragonsOfMugloarRestClientTest {
                 }
                 """)));
 
-        DragonsOfMugloarRestClient client = createClient();
+        final DragonsOfMugloarRestClient client = createClient();
 
         assertThat(client.getReputation(new GameId(GAME_ID)))
             .satisfies(_ -> wireMockServer.verify(
@@ -112,24 +109,22 @@ class DragonsOfMugloarRestClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))
             .willReturn(okJson(
                 """
-                    {
-                      "messages": [
-                        {
-                          "adId": "ad-1",
-                          "message": "Task",
-                          "reward": "10",
-                          "expiresIn": 3
-                        }
-                      ]
-                    }
+                    [
+                      {
+                        "adId": "ad-1",
+                        "message": "Task",
+                        "reward": "10",
+                        "expiresIn": 3
+                      }
+                    ]
                     """
             )));
 
-        DragonsOfMugloarRestClient client = createClient();
+        final DragonsOfMugloarRestClient client = createClient();
 
         assertThat(client.getMessages(new GameId(GAME_ID)))
             .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))))
-            .returns(List.of(new GameMessage(new MessageId("ad-1"), "Task", "10", 3)), MessageBoard::messages);
+            .containsExactly(new GameMessage(new MessageId("ad-1"), "Task", "10", 3));
     }
 
     @Test
@@ -149,15 +144,11 @@ class DragonsOfMugloarRestClientTest {
                     """
             )));
 
-        DragonsOfMugloarRestClient client = createClient();
+        final DragonsOfMugloarRestClient client = createClient();
 
-        assertThat(client.dealWithMessage(new GameId(GAME_ID), new MessageId("ad-1"), new MessageDecision(true)))
+        assertThat(client.dealWithMessage(new GameId(GAME_ID), new MessageId("ad-1")))
             .satisfies(_ -> wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/solve/ad-1"))
-                .withRequestBody(equalToJson("""
-                    {
-                      "action": "true"
-                    }
-                    """))))
+                .withRequestBody(absent())))
             .returns(true, MessageResolution::success)
             .returns(3, MessageResolution::lives)
             .returns(20L, MessageResolution::gold)
@@ -169,31 +160,29 @@ class DragonsOfMugloarRestClientTest {
 
     @Test
     void shouldDeserializeTheInventoryResponse() {
-        String shopResponse =
+        final String shopResponse =
             """
-                {
-                  "items": [
-                    {
-                      "id": "item-1",
-                      "name": "Potion",
-                      "cost": 5
-                    }
-                  ]
-                }
+                [
+                  {
+                    "id": "item-1",
+                    "name": "Potion",
+                    "cost": 5
+                  }
+                ]
                 """;
         wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/shop"))
             .willReturn(okJson(shopResponse)));
 
-        DragonsOfMugloarRestClient client = createClient();
+        final DragonsOfMugloarRestClient client = createClient();
 
         assertThat(client.getShop(new GameId(GAME_ID)))
             .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/shop"))))
-            .returns(List.of(new ShopItem(new ItemId("item-1"), "Potion", 5)), ShopInventory::items);
+            .containsExactly(new ShopItem(new ItemId("item-1"), "Potion", 5));
     }
 
     @Test
     void shouldDeserializeThePurchaseResultResponse() {
-        String purchaseResponse =
+        final String purchaseResponse =
             """
                 {
                   "shoppingSuccess": true,
@@ -206,7 +195,7 @@ class DragonsOfMugloarRestClientTest {
         wireMockServer.stubFor(post(urlEqualTo("/api/v2/" + GAME_ID + "/shop/buy/item-1"))
             .willReturn(okJson(purchaseResponse)));
 
-        DragonsOfMugloarRestClient client = createClient();
+        final DragonsOfMugloarRestClient client = createClient();
 
         assertThat(client.buyItem(new GameId(GAME_ID), new ItemId("item-1")))
             .satisfies(_ -> wireMockServer.verify(
@@ -220,14 +209,14 @@ class DragonsOfMugloarRestClientTest {
 
     @Test
     void shouldKeepResponseBodyReadableWhenDebugLoggingIsEnabled() {
-        Logger logger = (Logger) LoggerFactory.getLogger(UpstreamLoggingInterceptor.class);
-        Level previousLevel = logger.getLevel();
+        final Logger logger = (Logger) LoggerFactory.getLogger(UpstreamLoggingInterceptor.class);
+        final Level previousLevel = logger.getLevel();
         logger.setLevel(Level.DEBUG);
 
         try {
             wireMockServer.stubFor(post(urlEqualTo(START_GAME_PATH)).willReturn(okJson(START_GAME_RESPONSE)));
 
-            StartedGame response = createClient().startGame();
+            final StartedGame response = createClient().startGame();
 
             assertThat(response.gameId())
                 .satisfies(_ -> wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v2/game/start"))))
@@ -238,12 +227,12 @@ class DragonsOfMugloarRestClientTest {
     }
 
     private DragonsOfMugloarRestClient createClient() {
-        RestClient restClient = RestClient.builder()
+        final RestClient restClient = RestClient.builder()
             .baseUrl(wireMockServer.baseUrl())
             .bufferContent((_, _) -> true)
             .requestInterceptor(new UpstreamLoggingInterceptor())
             .build();
-        HttpServiceProxyFactory proxyFactory = HttpServiceProxyFactory
+        final HttpServiceProxyFactory proxyFactory = HttpServiceProxyFactory
             .builderFor(RestClientAdapter.create(restClient))
             .build();
         return proxyFactory.createClient(DragonsOfMugloarRestClient.class);

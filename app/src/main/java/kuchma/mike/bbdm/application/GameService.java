@@ -3,7 +3,6 @@ package kuchma.mike.bbdm.application;
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
 import kuchma.mike.bbdm.domain.model.MessageBoard;
-import kuchma.mike.bbdm.domain.model.MessageDecision;
 import kuchma.mike.bbdm.domain.model.MessageId;
 import kuchma.mike.bbdm.domain.model.MessageResolution;
 import kuchma.mike.bbdm.domain.model.ShopInventory;
@@ -14,7 +13,7 @@ import kuchma.mike.bbdm.domain.port.GameGateway;
 public class GameService {
     private final GameGateway gameGateway;
 
-    public GameService(GameGateway gameGateway) {
+    public GameService(final GameGateway gameGateway) {
         this.gameGateway = gameGateway;
     }
 
@@ -22,20 +21,19 @@ public class GameService {
         return gameGateway.startGame();
     }
 
-    public MessageBoard getMessages(GameId gameId) {
+    public MessageBoard getMessages(final GameId gameId) {
         return gameGateway.getMessages(gameId);
     }
 
-    public MessageResolution dealWithMessage(GameId gameId, MessageId messageId, DealMessageCommand command) {
-        MessageDecision decision = MessageDecision.fromAction(command.action());
-        return gameGateway.dealWithMessage(gameId, messageId, decision);
+    public MessageResolution dealWithMessage(final GameId gameId, final MessageId messageId) {
+        return gameGateway.dealWithMessage(gameId, messageId);
     }
 
-    public ShopInventory getShop(GameId gameId) {
+    public ShopInventory getShop(final GameId gameId) {
         return gameGateway.getShop(gameId);
     }
 
-    public ItemPurchaseResult buyItem(GameId gameId, String itemId) {
+    public ItemPurchaseResult buyItem(final GameId gameId, final String itemId) {
         return gameGateway.buyItem(gameId, new ShopItemId(itemId));
     }
 }

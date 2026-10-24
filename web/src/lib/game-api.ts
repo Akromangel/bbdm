@@ -72,11 +72,10 @@ export async function fetchMessages(gameId: string): Promise<Message[]> {
 export async function resolveMessage(
     gameId: string,
     messageId: string,
-    action: boolean,
 ): Promise<ActionOutcome> {
     return request<ActionOutcome>(
         `/api/${encodeURIComponent(gameId)}/messages/${encodeURIComponent(messageId)}`,
-        { method: "POST", body: JSON.stringify({ action: String(action) }) },
+        { method: "POST" },
     );
 }
 

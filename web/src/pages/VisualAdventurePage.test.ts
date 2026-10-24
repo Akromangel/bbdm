@@ -74,7 +74,7 @@ describe("visual adventure page", () => {
             await screen.findByRole("button", { name: /open message/i }),
         );
         await fireEvent.click(
-            screen.getByRole("button", { name: /accept the challenge/i }),
+            screen.getByRole("button", { name: /resolve the task/i }),
         );
 
         expect((await screen.findByRole("status")).textContent).toContain(
@@ -82,7 +82,7 @@ describe("visual adventure page", () => {
         );
         expect(await screen.findByText("Find the lost crown")).toBeTruthy();
         expect(screen.getByText("20")).toBeTruthy();
-        expect(api.resolveMessage).toHaveBeenCalledWith("game-1", "ad-1", true);
+        expect(api.resolveMessage).toHaveBeenCalledWith("game-1", "ad-1");
         await waitFor(() => expect(api.fetchMessages).toHaveBeenCalledTimes(2));
     });
 
