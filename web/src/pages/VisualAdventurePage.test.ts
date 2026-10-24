@@ -86,6 +86,69 @@ describe("visual adventure page", () => {
         await waitFor(() => expect(api.fetchMessages).toHaveBeenCalledTimes(2));
     });
 
+    it("shows mission failures as error toasts", async () => {
+        api.resolveMessage.mockResolvedValue({
+            message: " You failed on the mission!",
+        });
+        render(VisualAdventurePage);
+
+        await fireEvent.click(
+            await screen.findByRole("button", { name: /open message/i }),
+        );
+        await fireEvent.click(
+            screen.getByRole("button", { name: /resolve the task/i }),
+        );
+
+        const toast = await screen.findByRole("alert");
+        expect(toast.textContent).toContain("You failed on the mission!");
+        expect(toast.classList.contains("toast-error")).toBe(true);
+    });
+
+    it("shows an info toast when lives decrease to two", async () => {
+        api.resolveMessage.mockResolvedValue({
+            game: { lives: 2 },
+            message: "Quest accepted.",
+        });
+        render(VisualAdventurePage);
+
+        await fireEvent.click(
+            await screen.findByRole("button", { name: /open message/i }),
+        );
+        await fireEvent.click(
+            screen.getByRole("button", { name: /resolve the task/i }),
+        );
+
+        const toast = (
+            await screen.findByText(
+                "You have 2 lives left. Visit the shop and buy a pot.",
+            )
+        ).closest('[role="status"]');
+        expect(toast).not.toBeNull();
+    });
+
+    it("shows an orange warning toast when lives decrease to one", async () => {
+        api.resolveMessage.mockResolvedValue({
+            game: { lives: 1 },
+            message: "Quest accepted.",
+        });
+        render(VisualAdventurePage);
+
+        await fireEvent.click(
+            await screen.findByRole("button", { name: /open message/i }),
+        );
+        await fireEvent.click(
+            screen.getByRole("button", { name: /resolve the task/i }),
+        );
+
+        const toast = (
+            await screen.findByText(
+                "You have 1 life left. Visit the shop and buy a pot.",
+            )
+        ).closest('[role="status"]');
+        expect(toast).not.toBeNull();
+        expect(toast?.classList.contains("toast-warning")).toBe(true);
+    });
+
     it("loads the shop, completes a purchase, and refreshes its inventory", async () => {
         render(VisualAdventurePage);
 

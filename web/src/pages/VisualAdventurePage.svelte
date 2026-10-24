@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { onDestroy } from "svelte";
+    import Toaster, { type ToastMessage } from "../components/Toaster.svelte";
     import {
         fetchMessages,
         fetchShop,
@@ -18,8 +20,9 @@
     let selectedMessage: Message | null = null;
     let showShop = false;
     let busy = false;
-    let error = "";
-    let result = "";
+    let toasts: ToastMessage[] = [];
+    let nextToastId = 0;
+    const toastTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
 
     const statistics: { key: keyof GameState; label: string; icon: string }[] = [
         { key: "lives", label: "Lives", icon: "♥" },
@@ -35,14 +38,30 @@
         return cause instanceof Error ? cause.message : String(cause);
     }
 
+    function dismissToast(id: number) {
+        const timeout = toastTimeouts.get(id);
+        if (timeout) clearTimeout(timeout);
+        toastTimeouts.delete(id);
+        toasts = toasts.filter((toast) => toast.id !== id);
+    }
+
+    function showToast(type: ToastMessage["type"], message: string) {
+        const id = ++nextToastId;
+        toasts = [...toasts, { id, type, message }];
+        toastTimeouts.set(id, setTimeout(() => dismissToast(id), 5000));
+    }
+
+    onDestroy(() => {
+        for (const timeout of toastTimeouts.values()) clearTimeout(timeout);
+    });
+
     async function openAdventure() {
         busy = true;
-        error = "";
         try {
             game = await startGame();
             messages = await fetchMessages(game.gameId);
         } catch (cause) {
-            error = `The adventure could not be started. ${errorMessage(cause)}`;
+            showToast("error", `The adventure could not be started. ${errorMessage(cause)}`);
         } finally {
             busy = false;
         }
@@ -55,26 +74,41 @@
     function updateGame(outcome: ActionOutcome) {
         if (!game) return;
         const update = outcome.game ?? outcome;
+        const previousLives = game.lives;
+        const updatedLives = update.lives;
         game = { ...game, ...update, gameId: update.gameId ?? game.gameId };
+
+        if (previousLives !== undefined && updatedLives !== undefined && updatedLives < previousLives) {
+            if (updatedLives === 2) {
+                showToast("info", "You have 2 lives left. Visit the shop and buy a pot.");
+            } else if (updatedLives === 1) {
+                showToast("warning", "You have 1 life left. Visit the shop and buy a pot.");
+            }
+        }
     }
 
     async function dealWithMessage() {
         if (!selectedMessage || !game || busy) return;
         busy = true;
-        error = "";
-        result = "";
         try {
             const outcome = await resolveMessage(game.gameId, selectedMessage.adId);
             updateGame(outcome);
-            result = outcome.message ?? outcome.result ?? "The message has been resolved.";
+            const messageResult = outcome.message ?? outcome.result ?? "The message has been resolved.";
+            showToast(
+                messageResult.includes("You failed on the mission!") ? "error" : "info",
+                messageResult,
+            );
             selectedMessage = null;
             try {
                 await refreshMessages();
             } catch (cause) {
-                error = `Your response was recorded, but the messages could not be refreshed. ${errorMessage(cause)}`;
+                showToast(
+                    "error",
+                    `Your response was recorded, but the messages could not be refreshed. ${errorMessage(cause)}`,
+                );
             }
         } catch (cause) {
-            error = `That action could not be completed. ${errorMessage(cause)}`;
+            showToast("error", `That action could not be completed. ${errorMessage(cause)}`);
         } finally {
             busy = false;
         }
@@ -83,29 +117,30 @@
     async function loadShop() {
         if (!game) return;
         showShop = true;
-        error = "";
         try {
             shopItems = await fetchShop(game.gameId);
         } catch (cause) {
-            error = `The shop could not be loaded. ${errorMessage(cause)}`;
+            showToast("error", `The shop could not be loaded. ${errorMessage(cause)}`);
         }
     }
 
     async function buyItem(item: ShopItem) {
         if (!game || busy) return;
         busy = true;
-        error = "";
         try {
             const outcome = await purchaseItem(game.gameId, item);
             updateGame(outcome);
-            result = outcome.message ?? "Purchase complete.";
+            showToast("info", outcome.message ?? "Purchase complete.");
             try {
                 shopItems = await fetchShop(game.gameId);
             } catch (cause) {
-                error = `Your purchase was recorded, but the shop could not be refreshed. ${errorMessage(cause)}`;
+                showToast(
+                    "error",
+                    `Your purchase was recorded, but the shop could not be refreshed. ${errorMessage(cause)}`,
+                );
             }
         } catch (cause) {
-            error = `The purchase could not be completed. ${errorMessage(cause)}`;
+            showToast("error", `The purchase could not be completed. ${errorMessage(cause)}`);
         } finally {
             busy = false;
         }
@@ -157,13 +192,6 @@
                 </div>
             </section>
 
-            {#if result}
-                <div class="result-note" role="status"><span>✦</span> {result}</div>
-            {/if}
-            {#if error}
-                <div class="error-note" role="alert">{error}</div>
-            {/if}
-
             <section class="notice-board">
                 <div class="board-heading">
                     <div><p class="eyebrow">Fresh from the kingdom</p>
@@ -197,9 +225,6 @@
         </section>
     {:else}
         <section class="loading"><p>The adventure could not be opened.</p>
-            {#if error}
-                <div class="error-note" role="alert">{error}</div>
-            {/if}
             <button class="primary-button retry" on:click={openAdventure}>Try again</button>
         </section>
     {/if}
@@ -207,6 +232,8 @@
     <footer class="game-footer"><span>KEEP YOUR WITS ABOUT YOU</span><span>✳</span><span>THE DRAGON IS ALWAYS WATCHING</span>
     </footer>
 </main>
+
+<Toaster {toasts} onDismiss={dismissToast} />
 
 {#if selectedMessage}
     <div class="modal-backdrop" role="presentation"

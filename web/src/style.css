@@ -258,7 +258,7 @@ button:disabled {
 }
 .stat-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 10px;
     margin-top: 28px;
 }
@@ -411,22 +411,6 @@ button:disabled {
 }
 .empty-board p {
     margin: 5px 0 0;
-}
-.result-note,
-.error-note {
-    margin-top: 18px;
-    padding: 12px 15px;
-    border: 1px solid #536e57;
-    color: #c9ddc6;
-    font-size: 13px;
-}
-.result-note span {
-    margin-right: 8px;
-    color: var(--gold);
-}
-.error-note {
-    border-color: #9e594e;
-    color: #f0b3a8;
 }
 .game-footer {
     display: flex;
@@ -584,7 +568,7 @@ button:disabled {
         opacity: 0.6;
     }
     .stat-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
     .message-grid {
         grid-template-columns: repeat(2, 1fr);
