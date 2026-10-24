@@ -73,6 +73,49 @@ describe("visual adventure page", () => {
         expect(api.fetchMessages).toHaveBeenCalledWith("game-1");
     });
 
+    it("displays game over and disables the shop after messages return gone", async () => {
+        api.fetchMessages.mockRejectedValueOnce(
+            new api.ApiProblemError(410, "Game Over"),
+        );
+        render(VisualAdventurePage);
+
+        const gameOverMessage = await screen.findByText("This game is over.");
+        const shopButton = screen.getByRole("button", {
+            name: /visit the shop/i,
+        });
+        expect([
+            gameOverMessage.textContent,
+            shopButton.hasAttribute("disabled"),
+        ]).toEqual(["This game is over.", true]);
+    });
+
+    it("disables message actions when resolving a task returns game over", async () => {
+        api.resolveMessage.mockRejectedValueOnce(
+            new api.ApiProblemError(410, "Game Over"),
+        );
+        render(VisualAdventurePage);
+
+        await fireEvent.click(
+            await screen.findByRole("button", { name: /open message/i }),
+        );
+        await fireEvent.click(
+            screen.getByRole("button", { name: /resolve the task/i }),
+        );
+
+        const gameOverMessage = await screen.findByText("This game is over.");
+        const messageButton = screen.getByRole("button", {
+            name: /open message: rescue the baker/i,
+        });
+        const shopButton = screen.getByRole("button", {
+            name: /visit the shop/i,
+        });
+        expect([
+            gameOverMessage.textContent,
+            messageButton.hasAttribute("disabled"),
+            shopButton.hasAttribute("disabled"),
+        ]).toEqual(["This game is over.", true, true]);
+    });
+
     it("displays the board probability beneath each message", async () => {
         api.fetchMessages.mockResolvedValueOnce([
             {
@@ -223,7 +266,7 @@ describe("visual adventure page", () => {
 
         const toast = (
             await screen.findByText(
-                "You have 2 lives left. Visit the shop and buy a pot.",
+                "You have 2 lives left. Visit the shop and buy a Healing potion.",
             )
         ).closest('[role="status"]');
         expect(toast).not.toBeNull();
@@ -245,7 +288,7 @@ describe("visual adventure page", () => {
 
         const toast = (
             await screen.findByText(
-                "You have 1 life left. Visit the shop and buy a pot.",
+                "You have 1 life left. Visit the shop and buy a Healing potion.",
             )
         ).closest('[role="status"]');
         expect(toast).not.toBeNull();

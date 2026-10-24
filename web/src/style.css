@@ -13,25 +13,31 @@
     --gold: #d7b967;
     --green: #718d71;
 }
+
 * {
     box-sizing: border-box;
 }
+
 body {
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
 }
+
 button,
 a {
     font: inherit;
 }
+
 button {
     cursor: pointer;
 }
+
 a {
     color: inherit;
     text-decoration: none;
 }
+
 .landing {
     position: relative;
     display: grid;
@@ -45,6 +51,7 @@ a {
         #14201b 78%
     );
 }
+
 .landing::before,
 .landing::after {
     position: absolute;
@@ -55,20 +62,24 @@ a {
     border-radius: 50%;
     content: "";
 }
+
 .landing::before {
     top: -30vw;
 }
+
 .landing::after {
     right: -18vw;
     bottom: -54vw;
     width: 100vw;
     height: 100vw;
 }
+
 .landing-content {
     z-index: 1;
     width: min(740px, 88vw);
     padding: 60px 0 90px;
 }
+
 .eyebrow,
 .landing-footer,
 .game-footer,
@@ -81,10 +92,12 @@ a {
     letter-spacing: 0.16em;
     text-transform: uppercase;
 }
+
 .eyebrow {
     margin: 0 0 18px;
     color: var(--gold);
 }
+
 .landing h1 {
     margin: 0;
     font:
@@ -92,10 +105,12 @@ a {
         serif;
     letter-spacing: -0.055em;
 }
+
 .landing h1 em {
     color: var(--gold);
     font-weight: 500;
 }
+
 .intro {
     max-width: 400px;
     margin: 28px 0 36px;
@@ -103,6 +118,7 @@ a {
     font-size: 16px;
     line-height: 1.75;
 }
+
 .primary-button {
     display: inline-flex;
     align-items: center;
@@ -119,23 +135,28 @@ a {
         background 0.18s,
         transform 0.18s;
 }
+
 .primary-button:hover {
     transform: translateY(-2px);
     background: #e3ca81;
 }
+
 .primary-button:disabled,
 button:disabled {
-    cursor: wait;
+    cursor: not-allowed;
     opacity: 0.6;
 }
+
 .primary-button span {
     font-size: 17px;
 }
+
 .landing-note {
     margin: 19px 0 0;
     color: #849186;
     font-size: 11px;
 }
+
 .landing-footer {
     position: absolute;
     right: 6vw;
@@ -146,10 +167,12 @@ button:disabled {
     color: #889487;
     font-size: 9px;
 }
+
 .landing-footer span:last-child {
     color: var(--gold);
     font-size: 16px;
 }
+
 .landing-art {
     position: absolute;
     right: 13vw;
@@ -159,28 +182,34 @@ button:disabled {
     color: rgb(215 185 103 / 35%);
     transform: translateY(-50%);
 }
+
 .landing-art span {
     position: absolute;
     font-size: 25px;
 }
+
 .landing-art span:first-child {
     top: 0;
     left: 42%;
 }
+
 .landing-art span:nth-child(2) {
     right: 2%;
     top: 42%;
     font-size: 40px;
 }
+
 .landing-art span:last-child {
     bottom: 2%;
     left: 34%;
     font-size: 34px;
 }
+
 .game-shell {
     min-height: 100vh;
     background: #17251f;
 }
+
 .topbar {
     height: 64px;
     padding: 0 max(5vw, 24px);
@@ -189,6 +218,7 @@ button:disabled {
     justify-content: space-between;
     border-bottom: 1px solid rgb(241 233 215 / 11%);
 }
+
 .wordmark {
     display: flex;
     align-items: center;
@@ -197,34 +227,51 @@ button:disabled {
     font-weight: 700;
     letter-spacing: 0.12em;
 }
+
 .mark {
     color: var(--gold);
     font-size: 19px;
 }
+
 .wordmark-sub {
     color: #778579;
     font-family: "DM Mono", monospace;
     font-size: 9px;
     font-weight: 400;
 }
+
 .turn-marker {
     color: var(--gold);
     font-size: 9px;
 }
+
 .dashboard {
     width: min(1100px, 90vw);
     margin: 0 auto;
     padding: 55px 0 70px;
 }
+
 .dashboard-heading {
     display: flex;
     align-items: end;
     justify-content: space-between;
     gap: 20px;
 }
+
 .dashboard-heading .eyebrow {
     margin-bottom: 9px;
 }
+
+.game-over-banner {
+    margin: 28px 0 0;
+    padding: 16px 20px;
+    border: 1px solid #9e594e;
+    background: #3d2422;
+    color: #f0b3a8;
+    font-size: 16px;
+    font-weight: 600;
+}
+
 .dashboard h1,
 .notice-board h2,
 .message-modal h2,
@@ -235,16 +282,19 @@ button:disabled {
         serif;
     letter-spacing: -0.025em;
 }
+
 .gold-symbol {
     color: var(--gold);
     font-size: 24px;
 }
+
 .stat-grid {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 10px;
     margin-top: 28px;
 }
+
 .stat-card {
     display: grid;
     min-height: 112px;
@@ -256,14 +306,17 @@ button:disabled {
     border: 1px solid rgb(241 233 215 / 12%);
     background: rgb(255 255 255 / 2%);
 }
+
 .stat-icon {
     color: var(--gold);
     font-size: 14px;
 }
+
 .stat-label {
     color: #9aa69a;
     font-size: 11px;
 }
+
 .stat-card strong {
     grid-column: 2;
     margin-top: 8px;
@@ -271,9 +324,11 @@ button:disabled {
         500 26px / 1 "Playfair Display",
         serif;
 }
+
 .reputation {
     margin-top: 30px;
 }
+
 .section-caption {
     display: flex;
     align-items: center;
@@ -281,17 +336,20 @@ button:disabled {
     color: #a9b2a6;
     font-size: 9px;
 }
+
 .caption-line {
     height: 1px;
     flex: 1;
     background: rgb(241 233 215 / 12%);
 }
+
 .reputation-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     margin-top: 13px;
 }
+
 .reputation-item {
     display: flex;
     justify-content: space-between;
@@ -302,25 +360,31 @@ button:disabled {
     font-size: 12px;
     text-transform: capitalize;
 }
+
 .reputation-item strong {
     color: var(--paper);
     font-weight: 600;
 }
+
 .notice-board {
     margin-top: 48px;
 }
+
 .board-heading {
     display: flex;
     align-items: end;
     justify-content: space-between;
     margin-bottom: 19px;
 }
+
 .board-heading .eyebrow {
     margin-bottom: 8px;
 }
+
 .notice-board h2 {
     font-size: 32px;
 }
+
 .count {
     margin-left: 5px;
     color: #8c9b8e;
@@ -329,15 +393,18 @@ button:disabled {
         monospace;
     vertical-align: middle;
 }
+
 .board-hint {
     color: #829084;
     font-size: 9px;
 }
+
 .message-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
 }
+
 .paper {
     position: relative;
     display: flex;
@@ -353,35 +420,42 @@ button:disabled {
         transform 0.18s,
         box-shadow 0.18s;
 }
+
 .paper:hover {
     transform: translateY(-4px) rotate(-0.4deg);
     box-shadow: 0 12px 24px rgb(0 0 0 / 24%);
 }
+
 .paper-featured {
     background: #f4ecd9;
 }
+
 .paper-stamp {
     color: #8d7d55;
     font-size: 8px;
 }
+
 .paper-stamp strong {
     color: #5b4a20;
     font:
         700 10px "DM Sans",
         sans-serif;
 }
+
 .paper-title {
     margin: 0;
     font:
         500 17px / 1.38 "Playfair Display",
         serif;
 }
+
 .paper-content {
     display: flex;
     flex-direction: column;
     gap: 8px;
     margin: 18px 0 auto;
 }
+
 .paper-meta {
     display: flex;
     justify-content: space-between;
@@ -391,17 +465,21 @@ button:disabled {
     font-family: "DM Mono", monospace;
     font-size: 9px;
 }
+
 .paper-meta strong {
     font:
         700 11px "DM Sans",
         sans-serif;
 }
+
 .paper-meta .expires-urgent {
     color: #b42318;
 }
+
 .paper-meta .expires-soon {
     color: #9a7300;
 }
+
 .empty-board {
     display: grid;
     min-height: 140px;
@@ -411,13 +489,16 @@ button:disabled {
     color: #aab4a9;
     font-size: 13px;
 }
+
 .empty-board span {
     color: var(--gold);
     font-size: 23px;
 }
+
 .empty-board p {
     margin: 5px 0 0;
 }
+
 .game-footer {
     display: flex;
     justify-content: space-between;
@@ -426,10 +507,12 @@ button:disabled {
     color: #7e8b7f;
     font-size: 8px;
 }
+
 .game-footer span:nth-child(2) {
     color: var(--gold);
     font-size: 13px;
 }
+
 .loading {
     display: grid;
     min-height: calc(100vh - 130px);
@@ -438,6 +521,7 @@ button:disabled {
     color: #bac4b8;
     font-size: 13px;
 }
+
 .spinner {
     width: 24px;
     height: 24px;
@@ -446,14 +530,17 @@ button:disabled {
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
+
 .retry {
     margin-top: 18px;
 }
+
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
+
 .modal-backdrop {
     position: fixed;
     z-index: 3;
@@ -464,6 +551,7 @@ button:disabled {
     padding: 24px;
     background: rgb(5 11 8 / 78%);
 }
+
 .message-modal,
 .shop-modal {
     position: relative;
@@ -473,6 +561,7 @@ button:disabled {
     color: var(--ink);
     box-shadow: 0 24px 80px rgb(0 0 0 / 38%);
 }
+
 .close-button {
     position: absolute;
     top: 13px;
@@ -482,15 +571,18 @@ button:disabled {
     color: #68736a;
     font-size: 25px;
 }
+
 .message-modal h2 {
     max-width: 430px;
     font-size: 31px;
     line-height: 1.28;
 }
+
 .message-modal .eyebrow,
 .shop-modal .eyebrow {
     color: #8b7542;
 }
+
 .message-details {
     display: flex;
     gap: 20px;
@@ -498,24 +590,29 @@ button:disabled {
     color: #747a6d;
     font-size: 12px;
 }
+
 .message-details strong {
     margin-left: 5px;
     color: var(--ink);
 }
+
 .modal-prompt {
     margin: 27px 0 13px;
     color: #5f6d60;
     font-size: 13px;
 }
+
 .modal-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 17px;
 }
+
 .modal-actions .primary-button {
     gap: 0;
 }
+
 .quiet-button {
     padding: 10px 0;
     border: 0;
@@ -525,6 +622,7 @@ button:disabled {
     text-decoration: underline;
     text-underline-offset: 3px;
 }
+
 @media (max-width: 760px) {
     .landing-art {
         right: -5vw;
@@ -532,54 +630,68 @@ button:disabled {
         height: 55vw;
         opacity: 0.6;
     }
+
     .stat-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+
     .message-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
 @media (max-width: 500px) {
     .landing-content {
         padding-top: 25px;
     }
+
     .dashboard {
         width: 90vw;
         padding-top: 38px;
     }
+
     .dashboard-heading {
         align-items: start;
         flex-direction: column;
     }
+
     .dashboard h1 {
         font-size: 34px;
     }
+
     .stat-card {
         min-height: 93px;
         padding: 12px;
     }
+
     .reputation-grid {
         grid-template-columns: 1fr;
         gap: 6px;
     }
+
     .message-grid {
         grid-template-columns: 1fr;
     }
+
     .paper {
         min-height: 155px;
     }
+
     .board-heading {
         align-items: start;
         flex-direction: column;
         gap: 12px;
     }
+
     .board-hint {
         align-self: end;
     }
+
     .message-modal,
     .shop-modal {
         padding: 36px 24px 26px;
     }
+
     .game-footer span:last-child {
         display: none;
     }

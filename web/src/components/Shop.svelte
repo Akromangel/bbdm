@@ -2,6 +2,7 @@
     import {
         fetchShop,
         purchaseItem,
+        ApiProblemError,
         type ActionOutcome,
         type GameState,
         type ShopItem,
@@ -10,8 +11,10 @@
 
     export let game: GameState;
     export let busy = false;
+    export let gameOver = false;
     export let onGameUpdate: (outcome: ActionOutcome) => void;
     export let onToast: (type: ToastMessage["type"], message: string) => void;
+    export let onGameOver: () => void;
 
     let shopItems: ShopItem[] = [];
     let showShop = false;
@@ -20,11 +23,18 @@
         return cause instanceof Error ? cause.message : String(cause);
     }
 
+    function markGameOver(cause: unknown) {
+        if (cause instanceof ApiProblemError && cause.status === 410) {
+            onGameOver();
+        }
+    }
+
     async function loadShop() {
         showShop = true;
         try {
             shopItems = await fetchShop(game.gameId);
         } catch (cause) {
+            markGameOver(cause);
             onToast("error", `The shop could not be loaded. ${errorMessage(cause)}`);
         }
     }
@@ -47,6 +57,7 @@
                 );
             }
         } catch (cause) {
+            markGameOver(cause);
             onToast("error", `The purchase could not be completed. ${errorMessage(cause)}`);
         } finally {
             busy = false;
@@ -54,7 +65,7 @@
     }
 </script>
 
-<button class="shop-button" on:click={loadShop}><span>◈</span> Visit the shop</button>
+<button class="shop-button" disabled={gameOver} on:click={loadShop}><span>◈</span> Visit the shop</button>
 
 {#if showShop}
     <div class="modal-backdrop" role="presentation"
@@ -71,7 +82,7 @@
                             <p class="item-price">{item.cost != null ? `${item.cost} gold` : "Price unavailable"}</p>
                             <button
                                 class="buy-button"
-                                disabled={busy || item.cost == null || item.cost > (game.gold ?? 0)}
+                                disabled={gameOver || busy || item.cost == null || item.cost > (game.gold ?? 0)}
                                 on:click={() => buyItem(item)}
                             >Buy</button>
                         </article>

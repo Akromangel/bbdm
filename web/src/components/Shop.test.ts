@@ -5,6 +5,14 @@ import Shop from "./Shop.svelte";
 const api = vi.hoisted(() => ({
     fetchShop: vi.fn(),
     purchaseItem: vi.fn(),
+    ApiProblemError: class ApiProblemError extends Error {
+        status: number;
+
+        constructor(status: number, message: string) {
+            super(message);
+            this.status = status;
+        }
+    },
 }));
 
 vi.mock("../lib/game-api", () => api);
@@ -30,7 +38,9 @@ describe("shop component", () => {
     it("loads wares, completes a purchase, and refreshes the inventory", async () => {
         const onGameUpdate = vi.fn();
         const onToast = vi.fn();
-        render(Shop, { props: { game, onGameUpdate, onToast } });
+        render(Shop, {
+            props: { game, onGameUpdate, onToast, onGameOver: vi.fn() },
+        });
 
         await fireEvent.click(
             screen.getByRole("button", { name: /visit the shop/i }),
@@ -56,7 +66,14 @@ describe("shop component", () => {
     it("reports an error when the shop cannot be loaded", async () => {
         api.fetchShop.mockRejectedValue(new Error("Unavailable"));
         const onToast = vi.fn();
-        render(Shop, { props: { game, onGameUpdate: vi.fn(), onToast } });
+        render(Shop, {
+            props: {
+                game,
+                onGameUpdate: vi.fn(),
+                onToast,
+                onGameOver: vi.fn(),
+            },
+        });
 
         await fireEvent.click(
             screen.getByRole("button", { name: /visit the shop/i }),
