@@ -7,5 +7,11 @@
         <button class="primary-button" onclick={() => window.location.assign("/game")}>
             Visual adventure <span aria-hidden="true">↗</span>
         </button>
+        <button
+            class="primary-button"
+            onclick={() => window.location.assign("/scripting-adventure")}
+        >
+            Scripting adventure <span aria-hidden="true">↗</span>
+        </button>
     </div>
 </main>

@@ -5,13 +5,16 @@ import HomePage from "./HomePage.svelte";
 describe("home page", () => {
     afterEach(cleanup);
 
-    it("offers the visual adventure as its only page action", () => {
+    it("offers both adventures as page actions", () => {
         render(HomePage);
 
         expect(
             screen.getByRole("button", { name: /visual adventure/i }),
         ).toBeTruthy();
-        expect(screen.getAllByRole("button")).toHaveLength(1);
+        expect(
+            screen.getByRole("button", { name: /scripting adventure/i }),
+        ).toBeTruthy();
+        expect(screen.getAllByRole("button")).toHaveLength(2);
         expect(screen.queryByRole("link")).toBeNull();
     });
 });
