@@ -1,24 +1,20 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
+    import Shop from "../components/Shop.svelte";
     import Toaster, { type ToastMessage } from "../components/Toaster.svelte";
     import {
         fetchMessages,
-        fetchShop,
-        purchaseItem,
         resolveMessage,
         startGame,
         type ActionOutcome,
         type GameState,
         type Message,
         type ReputationGroup,
-        type ShopItem,
     } from "../lib/game-api";
 
     let game: GameState | null = null;
     let messages: Message[] = [];
-    let shopItems: ShopItem[] = [];
     let selectedMessage: Message | null = null;
-    let showShop = false;
     let busy = false;
     let toasts: ToastMessage[] = [];
     let nextToastId = 0;
@@ -114,38 +110,6 @@
         }
     }
 
-    async function loadShop() {
-        if (!game) return;
-        showShop = true;
-        try {
-            shopItems = await fetchShop(game.gameId);
-        } catch (cause) {
-            showToast("error", `The shop could not be loaded. ${errorMessage(cause)}`);
-        }
-    }
-
-    async function buyItem(item: ShopItem) {
-        if (!game || busy) return;
-        busy = true;
-        try {
-            const outcome = await purchaseItem(game.gameId, item);
-            updateGame(outcome);
-            showToast("info", outcome.message ?? "Purchase complete.");
-            try {
-                shopItems = await fetchShop(game.gameId);
-            } catch (cause) {
-                showToast(
-                    "error",
-                    `Your purchase was recorded, but the shop could not be refreshed. ${errorMessage(cause)}`,
-                );
-            }
-        } catch (cause) {
-            showToast("error", `The purchase could not be completed. ${errorMessage(cause)}`);
-        } finally {
-            busy = false;
-        }
-    }
-
     openAdventure();
 </script>
 
@@ -169,7 +133,7 @@
                     <p class="eyebrow">Your adventure</p>
                     <h1>Field journal <span class="gold-symbol">✦</span></h1>
                 </div>
-                <button class="shop-button" on:click={loadShop}><span>◈</span> Visit the shop</button>
+                <Shop game={game} bind:busy onGameUpdate={updateGame} onToast={showToast} />
             </div>
 
             <div class="stat-grid">
@@ -252,31 +216,6 @@
                 <button class="primary-button" disabled={busy}
                         on:click={dealWithMessage}>{busy ? "Working…" : "Resolve the task"}</button>
             </div>
-        </div>
-    </div>
-{/if}
-
-{#if showShop}
-    <div class="modal-backdrop" role="presentation"
-         on:click={(event) => event.target === event.currentTarget && (showShop = false)}>
-        <div class="shop-modal" role="dialog" aria-modal="true" aria-labelledby="shop-heading" tabindex="-1">
-            <button class="close-button" aria-label="Close shop" on:click={() => (showShop = false)}>×</button>
-            <p class="eyebrow">A well-stocked merchant</p>
-            <h2 id="shop-heading">The shop <span class="gold-symbol">◈</span></h2>
-            {#if shopItems.length}
-                <div class="shop-list">
-                    {#each shopItems as item}
-                        <div class="shop-item">
-                            <div>
-                                <strong>{item.name ?? item.id}</strong><span>{item.cost ? `${item.cost} gold` : item.description ?? "Useful for the journey"}</span>
-                            </div>
-                            <button class="buy-button" disabled={busy} on:click={() => buyItem(item)}>Buy</button>
-                        </div>
-                    {/each}
-                </div>
-            {:else}
-                <p class="shop-empty">No wares are on display at the moment.</p>
-            {/if}
         </div>
     </div>
 {/if}
