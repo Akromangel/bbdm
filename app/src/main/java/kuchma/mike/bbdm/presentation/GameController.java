@@ -1,6 +1,7 @@
 package kuchma.mike.bbdm.presentation;
 
 import kuchma.mike.bbdm.application.GameService;
+import kuchma.mike.bbdm.application.MessageResolutionRejectedException;
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
 import kuchma.mike.bbdm.domain.model.MessageBoard;
@@ -9,6 +10,11 @@ import kuchma.mike.bbdm.domain.model.MessageResolution;
 import kuchma.mike.bbdm.domain.model.ShopInventory;
 import kuchma.mike.bbdm.domain.model.StartedGame;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +34,7 @@ public class GameController {
 
     private final GameService gameService;
 
-    public GameController(GameService gameService) {
+    public GameController(final GameService gameService) {
         this.gameService = gameService;
     }
 
@@ -38,27 +44,42 @@ public class GameController {
     }
 
     @GetMapping("/{" + GAME_ID_PATH_VARIABLE + "}/messages")
-    public MessageBoard getMessages(@PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId) {
+    public MessageBoard getMessages(@PathVariable(GAME_ID_PATH_VARIABLE) final GameId gameId) {
         return gameService.getMessages(gameId);
     }
 
     @PostMapping("/{" + GAME_ID_PATH_VARIABLE + "}/messages/{" + MESSAGE_ID_PATH_VARIABLE + "}")
     public MessageResolution dealWithMessage(
-        @PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId,
-        @PathVariable(MESSAGE_ID_PATH_VARIABLE) MessageId messageId
+        @PathVariable(GAME_ID_PATH_VARIABLE) final GameId gameId,
+        @PathVariable(MESSAGE_ID_PATH_VARIABLE) final MessageId messageId
     ) {
         return gameService.dealWithMessage(gameId, messageId);
     }
 
+    @ExceptionHandler(MessageResolutionRejectedException.class)
+    public ResponseEntity<ProblemDetail> handleRejectedMessage(
+        final MessageResolutionRejectedException exception
+    ) {
+        final ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            exception.getMessage()
+        );
+        problem.setTitle("Message could not be resolved");
+        problem.setProperty("messageId", exception.messageId());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(problem);
+    }
+
     @GetMapping("/{" + GAME_ID_PATH_VARIABLE + "}/shop")
-    public ShopInventory getShop(@PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId) {
+    public ShopInventory getShop(@PathVariable(GAME_ID_PATH_VARIABLE) final GameId gameId) {
         return gameService.getShop(gameId);
     }
 
     @PostMapping("/{" + GAME_ID_PATH_VARIABLE + "}/shop/{" + ITEM_ID_PATH_VARIABLE + "}")
     public ItemPurchaseResult buyItem(
-        @PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId,
-        @PathVariable(ITEM_ID_PATH_VARIABLE) String itemId
+        @PathVariable(GAME_ID_PATH_VARIABLE) final GameId gameId,
+        @PathVariable(ITEM_ID_PATH_VARIABLE) final String itemId
     ) {
         return gameService.buyItem(gameId, itemId);
     }

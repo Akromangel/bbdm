@@ -110,4 +110,31 @@ describe("game API", () => {
 
         await expect(startGame()).rejects.toThrow("Game unavailable");
     });
+
+    it("parses problem responses into structured API errors", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue(
+                new Response(
+                    JSON.stringify({
+                        title: "Message could not be resolved",
+                        status: 400,
+                        detail: "The game server rejected this message.",
+                        messageId: "ad-1",
+                    }),
+                    {
+                        status: 400,
+                        headers: { "Content-Type": "application/problem+json" },
+                    },
+                ),
+            ),
+        );
+
+        await expect(resolveMessage("game-1", "ad-1")).rejects.toMatchObject({
+            name: "ApiProblemError",
+            status: 400,
+            message: "The game server rejected this message.",
+            messageId: "ad-1",
+        });
+    });
 });

@@ -1,7 +1,9 @@
 package kuchma.mike.bbdm.infrastructure.adapter;
 
 import java.util.List;
+import java.nio.charset.StandardCharsets;
 
+import kuchma.mike.bbdm.application.MessageResolutionRejectedException;
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.MessageId;
@@ -9,8 +11,12 @@ import kuchma.mike.bbdm.infrastructure.client.DragonsOfMugloarRestClient;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -46,5 +52,26 @@ class DragonsOfMugloarGameGatewayTest {
 
         assertThat(messages)
             .containsExactly(shorterExpiration, highestReward, lowerRewardSameExpiration, longestExpiration);
+    }
+
+    @Test
+    void shouldTranslateAnUpstreamBadRequestWhenResolvingAMessage() {
+        when(restClient.dealWithMessage(GAME_ID, new MessageId("ad-1"))).thenThrow(
+            HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST,
+                "Bad Request",
+                HttpHeaders.EMPTY,
+                "<html><body><pre>Bad Request</pre></body></html>".getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8
+            )
+        );
+        final DragonsOfMugloarGameGateway gateway = new DragonsOfMugloarGameGateway(restClient);
+
+        assertThatThrownBy(() -> gateway.dealWithMessage(GAME_ID, new MessageId("ad-1")))
+            .isInstanceOfSatisfying(
+                MessageResolutionRejectedException.class,
+                exception -> assertThat(exception.messageId()).isEqualTo("ad-1")
+            );
+        verify(restClient).dealWithMessage(GAME_ID, new MessageId("ad-1"));
     }
 }

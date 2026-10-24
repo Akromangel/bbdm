@@ -33,10 +33,22 @@ export interface ActionOutcome extends Partial<GameState> {
     result?: string;
 }
 
+export class ApiProblemError extends Error {
+    constructor(
+        public readonly status: number,
+        message: string,
+        public readonly messageId?: string,
+    ) {
+        super(message);
+        this.name = "ApiProblemError";
+    }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers);
     headers.set("Content-Type", "application/json");
     headers.set("API-Version", "1.0");
+    headers.set("Accept", "application/json, application/problem+json");
 
     const response = await fetch(path, {
         ...options,
@@ -44,6 +56,29 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     });
 
     if (!response.ok) {
+        if (
+            response.headers
+                .get("content-type")
+                ?.includes("application/problem+json")
+        ) {
+            const problem: unknown = await response.json();
+            if (typeof problem === "object" && problem !== null) {
+                const fields = problem as Record<string, unknown>;
+                const message =
+                    typeof fields.detail === "string"
+                        ? fields.detail
+                        : typeof fields.title === "string"
+                          ? fields.title
+                          : `Request failed (${response.status})`;
+                throw new ApiProblemError(
+                    response.status,
+                    message,
+                    typeof fields.messageId === "string"
+                        ? fields.messageId
+                        : undefined,
+                );
+            }
+        }
         const body = await response.text();
         throw new Error(body || `Request failed (${response.status})`);
     }

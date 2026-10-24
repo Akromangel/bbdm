@@ -15,9 +15,13 @@ import kuchma.mike.bbdm.domain.model.ShopItem;
 import kuchma.mike.bbdm.domain.model.ShopItemId;
 import kuchma.mike.bbdm.domain.model.StartedGame;
 import kuchma.mike.bbdm.domain.port.GameGateway;
+import kuchma.mike.bbdm.application.MessageResolutionRejectedException;
 import kuchma.mike.bbdm.infrastructure.client.DragonsOfMugloarRestClient;
 
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @Component
 public class DragonsOfMugloarGameGateway implements GameGateway {
@@ -46,7 +50,14 @@ public class DragonsOfMugloarGameGateway implements GameGateway {
 
     @Override
     public MessageResolution dealWithMessage(final GameId gameId, final MessageId messageId) {
-        return restClient.dealWithMessage(gameId, messageId);
+        try {
+            return restClient.dealWithMessage(gameId, messageId);
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == BAD_REQUEST) {
+                throw new MessageResolutionRejectedException(messageId.value());
+            }
+            throw exception;
+        }
     }
 
     @Override

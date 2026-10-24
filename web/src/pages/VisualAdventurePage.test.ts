@@ -14,12 +14,24 @@ const api = vi.hoisted(() => ({
     purchaseItem: vi.fn(),
     resolveMessage: vi.fn(),
     startGame: vi.fn(),
+    ApiProblemError: class ApiProblemError extends Error {
+        status: number;
+        messageId?: string;
+
+        constructor(status: number, message: string, messageId?: string) {
+            super(message);
+            this.name = "ApiProblemError";
+            this.status = status;
+            this.messageId = messageId;
+        }
+    },
 }));
 
 vi.mock("../lib/game-api", () => api);
 
 describe("visual adventure page", () => {
     beforeEach(() => {
+        sessionStorage.clear();
         api.fetchMessages.mockResolvedValue([
             { adId: "ad-1", message: "Rescue the baker" },
         ]);
@@ -45,6 +57,7 @@ describe("visual adventure page", () => {
 
     afterEach(() => {
         cleanup();
+        sessionStorage.clear();
         vi.clearAllMocks();
     });
 
@@ -160,6 +173,38 @@ describe("visual adventure page", () => {
         const toast = await screen.findByRole("alert");
         expect(toast.textContent).toContain("You failed on the mission!");
         expect(toast.classList.contains("toast-error")).toBe(true);
+    });
+
+    it("removes a rejected message for the rest of the browser session", async () => {
+        api.resolveMessage.mockRejectedValue(
+            new api.ApiProblemError(
+                400,
+                "The game server rejected this message. It has been removed from the message board.",
+                "ad-1",
+            ),
+        );
+        const firstRender = render(VisualAdventurePage);
+
+        await fireEvent.click(
+            await screen.findByRole("button", { name: /open message/i }),
+        );
+        await fireEvent.click(
+            screen.getByRole("button", { name: /resolve the task/i }),
+        );
+        expect((await screen.findByRole("alert")).textContent).toContain(
+            "The game server rejected this message.",
+        );
+        await waitFor(() =>
+            expect(screen.queryByText("Rescue the baker")).toBeNull(),
+        );
+
+        firstRender.unmount();
+        api.startGame.mockResolvedValueOnce({ gameId: "game-2" });
+        render(VisualAdventurePage);
+
+        expect(
+            await screen.findByText("The board is quiet for now."),
+        ).toBeTruthy();
     });
 
     it("shows an info toast when lives decrease to two", async () => {

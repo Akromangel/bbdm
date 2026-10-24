@@ -6,6 +6,7 @@
         fetchMessages,
         resolveMessage,
         startGame,
+        ApiProblemError,
         type ActionOutcome,
         type GameState,
         type Message,
@@ -19,6 +20,7 @@
     let toasts: ToastMessage[] = [];
     let nextToastId = 0;
     const toastTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
+    let hiddenMessageIds: Set<string> | undefined;
 
     const statistics: { key: keyof GameState; label: string; icon: string }[] = [
         { key: "lives", label: "Lives", icon: "♥" },
@@ -60,6 +62,33 @@
         toastTimeouts.set(id, setTimeout(() => dismissToast(id), 5000));
     }
 
+    function hiddenMessages(): Set<string> {
+        if (hiddenMessageIds) {
+            return hiddenMessageIds;
+        }
+        const stored = sessionStorage.getItem("bbdm:hidden-message-ids");
+        const parsed: unknown = stored ? JSON.parse(stored) : [];
+        hiddenMessageIds = new Set(
+            Array.isArray(parsed)
+                ? parsed.filter((messageId): messageId is string => typeof messageId === "string")
+                : [],
+        );
+        return hiddenMessageIds;
+    }
+
+    function hideMessage(messageId: string) {
+        const hidden = hiddenMessages();
+        hidden.add(messageId);
+        sessionStorage.setItem("bbdm:hidden-message-ids", JSON.stringify([...hidden]));
+        messages = messages.filter((message) => message.adId !== messageId);
+    }
+
+    async function loadMessages(gameId: string) {
+        const loadedMessages = await fetchMessages(gameId);
+        const hidden = hiddenMessages();
+        messages = loadedMessages.filter((message) => !hidden.has(message.adId));
+    }
+
     onDestroy(() => {
         for (const timeout of toastTimeouts.values()) clearTimeout(timeout);
     });
@@ -68,7 +97,7 @@
         busy = true;
         try {
             game = await startGame();
-            messages = await fetchMessages(game.gameId);
+            await loadMessages(game.gameId);
         } catch (cause) {
             showToast("error", `The adventure could not be started. ${errorMessage(cause)}`);
         } finally {
@@ -78,7 +107,7 @@
 
     async function refreshMessages() {
         if (game) {
-            messages = await fetchMessages(game.gameId);
+            await loadMessages(game.gameId);
         }
     }
 
@@ -104,9 +133,11 @@
         if (!selectedMessage || !game || busy) {
             return;
         }
+        const message = selectedMessage;
+        const currentGame = game;
         busy = true;
         try {
-            const outcome = await resolveMessage(game.gameId, selectedMessage.adId);
+            const outcome = await resolveMessage(currentGame.gameId, message.adId);
             updateGame(outcome);
             const messageResult = outcome.message ?? outcome.result ?? "The message has been resolved.";
             showToast(
@@ -123,6 +154,14 @@
                 );
             }
         } catch (cause) {
+            if (
+                cause instanceof ApiProblemError &&
+                cause.status === 400 &&
+                cause.messageId === message.adId
+            ) {
+                hideMessage(cause.messageId);
+                selectedMessage = null;
+            }
             showToast("error", `That action could not be completed. ${errorMessage(cause)}`);
         } finally {
             busy = false;
