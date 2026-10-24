@@ -13,5 +13,6 @@ trim_trailing_whitespace = true
 end_of_line = crlf
 
 [*.java]
+ij_java_imports_layout = java.**,|,javax.**,|,kuchma.mike.**,|,*,|,$*
 ij_java_class_count_to_use_import_on_demand = 99
 ij_java_names_count_to_use_import_on_demand = 99

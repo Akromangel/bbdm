@@ -31,6 +31,7 @@ dependencies {
 
 tasks.withType<JavaCompile> {
     options.release = libs.versions.java.get().toInt()
+    options.compilerArgs.add("-Xlint:all")
 }
 
 tasks.withType<Test> {
