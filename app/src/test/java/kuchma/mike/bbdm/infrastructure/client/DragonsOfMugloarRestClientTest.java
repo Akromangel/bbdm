@@ -37,6 +37,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DragonsOfMugloarRestClientTest {
     private static final String GAME_ID = "game-1";
+
+    private static final String START_GAME_PATH = "/api/v2/game/start";
+
+    private static final String GAME_PATH = "/api/v2/" + GAME_ID;
+
     private static final String START_GAME_RESPONSE =
         """
             {
@@ -66,7 +71,7 @@ class DragonsOfMugloarRestClientTest {
 
     @Test
     void shouldDeserializeTheCreatedGameResponse() {
-        wireMockServer.stubFor(post(urlEqualTo("/api/v2/game/start")).willReturn(okJson(START_GAME_RESPONSE)));
+        wireMockServer.stubFor(post(urlEqualTo(START_GAME_PATH)).willReturn(okJson(START_GAME_RESPONSE)));
 
         DragonsOfMugloarRestClient client = createClient();
 
@@ -220,7 +225,7 @@ class DragonsOfMugloarRestClientTest {
         logger.setLevel(Level.DEBUG);
 
         try {
-            wireMockServer.stubFor(post(urlEqualTo("/api/v2/game/start")).willReturn(okJson(START_GAME_RESPONSE)));
+            wireMockServer.stubFor(post(urlEqualTo(START_GAME_PATH)).willReturn(okJson(START_GAME_RESPONSE)));
 
             StartedGame response = createClient().startGame();
 

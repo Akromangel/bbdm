@@ -11,6 +11,8 @@ wiremock = "3.13.2"
 jspecify = "1.0.1"
 tabletest = "1.2.2"
 tabletest-reporter = "1.5.0"
+spotbugs-gradle = "6.5.13"
+spotbugs-engine = "4.10.5"
 
 [libraries]
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
@@ -23,3 +25,4 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 dependency-updates = { id = "io.github.ben-manes.versions", version.ref = "dependency-updates" }
 tabletest-reporter = { id = "org.tabletest.reporter", version.ref = "tabletest-reporter" }
+spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs-gradle" }

@@ -21,8 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(path = "/api", version = GameController.API_VERSION)
 public class GameController {
     public static final String API_VERSION = "1.0";
+
     private static final String GAME_ID_PATH_VARIABLE = "gameId";
+
     private static final String MESSAGE_ID_PATH_VARIABLE = "messageId";
+
     private static final String ITEM_ID_PATH_VARIABLE = "itemId";
 
     private final GameService gameService;

@@ -34,7 +34,11 @@ public class DragonsOfMugloarGameGateway implements GameGateway {
     }
 
     @Override
-    public MessageResolution dealWithMessage(final GameId gameId, final MessageId messageId, final MessageDecision decision) {
+    public MessageResolution dealWithMessage(
+        final GameId gameId,
+        final MessageId messageId,
+        final MessageDecision decision
+    ) {
         return restClient.dealWithMessage(
             gameId,
             messageId,

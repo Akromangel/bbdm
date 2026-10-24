@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record MessageDecision(@JsonIgnore boolean accepted) {
     private static final String ACCEPTED_ACTION = "true";
+
     private static final String REJECTED_ACTION = "false";
 
     @JsonCreator

@@ -14,6 +14,7 @@ import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 class OnionArchitectureTest {
     private static final String APPLICATION_LAYER = "Application";
+
     private static final String DOMAIN_LAYER = "Domain";
 
     private static final ArchRule ONION_ARCHITECTURE = layeredArchitecture()

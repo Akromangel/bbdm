@@ -22,7 +22,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @HttpExchange(url = "/api/v2", accept = APPLICATION_JSON_VALUE)
 public interface DragonsOfMugloarRestClient {
     String GAME_ID_PATH_VARIABLE = "gameId";
+
     String MESSAGE_ID_PATH_VARIABLE = "adId";
+
     String ITEM_ID_PATH_VARIABLE = "itemId";
 
     @PostExchange("/game/start")
