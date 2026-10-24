@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "dragonsofmugloar.messages.filtered-probabilities",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Probability values of messages to exclude from the message board."
+    }
+  ]
+}

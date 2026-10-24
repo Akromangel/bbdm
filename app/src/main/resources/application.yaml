@@ -14,3 +14,7 @@ logging:
 dragonsofmugloar:
     api:
         base-url: https://dragonsofmugloar.com
+    messages:
+        filtered-probabilities:
+            - Impossible
+            - Suicide mission

@@ -128,9 +128,35 @@ class DragonsOfMugloarRestClientTest {
         assertThat(client.getMessages(new GameId(GAME_ID)))
             .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))))
             .containsExactly(
-                new GameMessage(new MessageId("ad-1"), "Task", 10, 3, "75%"),
-                new GameMessage(new MessageId("ad-2"), "Another task", 5, 4, null)
+                new GameMessage(new MessageId("ad-1"), "Task", 10, 3, "75%", 0),
+                new GameMessage(new MessageId("ad-2"), "Another task", 5, 4, null, 0)
             );
+    }
+
+    @Test
+    void shouldDecodeEncryptedMessageFields() {
+        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))
+            .willReturn(okJson("""
+                [
+                  {
+                    "adId": "WWYyUzMyMTY=",
+                    "message": "SW5maWx0cmF0ZSBUaGUgRWJvbnkgQ3Jvc3NlcyBhbmQgcmVjb3ZlciB0aGVpciBzZWNyZXRzLg==",
+                    "reward": 151,
+                    "expiresIn": 2,
+                    "encrypted": 1,
+                    "probability": "U3VpY2lkZSBtaXNzaW9u"
+                  }
+                ]
+                """)));
+
+        final DragonsOfMugloarRestClient client = createClient();
+
+        assertThat(client.getMessages(new GameId(GAME_ID)))
+            .singleElement()
+            .returns(new MessageId("Yf2S3216"), GameMessage::adId)
+            .returns("Infiltrate The Ebony Crosses and recover their secrets.", GameMessage::message)
+            .returns("Suicide mission", GameMessage::probability)
+            .returns(1, GameMessage::encrypted);
     }
 
     @Test
