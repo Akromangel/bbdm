@@ -2,6 +2,7 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 plugins {
     java
+    id("jvm-test-suite")
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.dependency.updates)
@@ -52,6 +53,34 @@ tasks.withType<Test> {
     finalizedBy(tasks.jacocoTestReport)
 }
 
+testing {
+    suites {
+        register<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project())
+            }
+            targets {
+                all {
+                    testTask.configure {
+                        shouldRunAfter(tasks.test)
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(testing.suites.named("integrationTest"))
+}
+
+configurations.named("integrationTestImplementation") {
+    extendsFrom(configurations.testImplementation.get())
+}
+configurations.named("integrationTestRuntimeOnly") {
+    extendsFrom(configurations.testRuntimeOnly.get())
+}
+
 pmd {
     isConsoleOutput = true
     toolVersion = libs.versions.pmd.get()
@@ -66,6 +95,10 @@ tasks.withType<Pmd>().configureEach {
 }
 
 tasks.named<Pmd>("pmdTest") {
+    ruleSetFiles = files("config/pmd/test-ruleset.xml")
+}
+
+tasks.named<Pmd>("pmdIntegrationTest") {
     ruleSetFiles = files("config/pmd/test-ruleset.xml")
 }
 
