@@ -2,13 +2,15 @@
 
 A Svelte adventure dashboard for Dragons of Mugloar, backed by a Java and Spring Boot 4 API proxy.
 
-## Run locally
+## Local development
 
-Start the backend from the repository root:
+Start the backend from the repository root with the `local` Spring profile. This loads `application-local.yaml`, which enables debug logging:
 
 ```powershell
-.\gradlew.bat :app:bootRun
+.\gradlew.bat :app:bootRun --args='--spring.profiles.active=local'
 ```
+
+When launching the backend from an IDE, set the active Spring profile to `local` in the run configuration. Without this profile, the application uses the default `INFO` log level.
 
 In a second terminal, start the web application:
 

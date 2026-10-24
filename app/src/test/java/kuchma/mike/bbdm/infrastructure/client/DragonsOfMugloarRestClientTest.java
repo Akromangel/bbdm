@@ -1,6 +1,9 @@
 package kuchma.mike.bbdm.infrastructure.client;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -8,6 +11,9 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -37,7 +43,31 @@ class DragonsOfMugloarRestClientTest {
         server.verify();
     }
 
+    @Test
+    void keepsResponseBodyReadableWhenDebugLoggingIsEnabled() {
+        Logger logger = (Logger) LoggerFactory.getLogger(UpstreamLoggingInterceptor.class);
+        Level previousLevel = logger.getLevel();
+        logger.setLevel(Level.DEBUG);
+
+        try {
+            RestClient.Builder restClientBuilder = RestClient.builder().baseUrl(BASE_URL);
+            MockRestServiceServer server = MockRestServiceServer.bindTo(restClientBuilder).build();
+            server.expect(requestTo(BASE_URL + "/api/v2/game/start"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("{\"gameId\":\"" + GAME_ID + "\"}", MediaType.APPLICATION_JSON));
+
+            Object response = createClient(restClientBuilder).startGame();
+
+            assertEquals(Map.of("gameId", GAME_ID), response);
+            server.verify();
+        } finally {
+            logger.setLevel(previousLevel);
+        }
+    }
+
     private static DragonsOfMugloarRestClient createClient(RestClient.Builder restClientBuilder) {
+        restClientBuilder.bufferContent((uri, method) -> true);
+        restClientBuilder.requestInterceptor(new UpstreamLoggingInterceptor());
         HttpServiceProxyFactory proxyFactory = HttpServiceProxyFactory
             .builderFor(RestClientAdapter.create(restClientBuilder.build()))
             .build();

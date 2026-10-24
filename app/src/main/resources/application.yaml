@@ -1,8 +1,16 @@
 spring:
     application:
         name: bbdm
+    output:
+        ansi:
+            enabled: ALWAYS
 server:
     port: 8080
+logging:
+    level:
+        root: INFO
+    pattern:
+        console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %highlight(%-5level) [%thread] %cyan(%logger{36}) %magenta(%kvp) - %msg%n"
 dragonsofmugloar:
     api:
         base-url: https://dragonsofmugloar.com
