@@ -83,7 +83,7 @@ describe("visual adventure page", () => {
             expiryDays.map((expiresIn) => ({
                 adId: `ad-${expiresIn}`,
                 message: `Quest ${expiresIn}`,
-                reward: `${expiresIn * 10} gold`,
+                reward: expiresIn === 1 ? 0 : expiresIn * 10,
                 expiresIn,
             })),
         );
@@ -104,17 +104,17 @@ describe("visual adventure page", () => {
             })),
         ).toEqual([
             {
-                emphasizedValues: ["10 gold", "1"],
+                emphasizedValues: ["0", "1"],
                 expiryTone: "expires-urgent",
             },
             {
-                emphasizedValues: ["20 gold", "2"],
+                emphasizedValues: ["20", "2"],
                 expiryTone: "expires-urgent",
             },
-            { emphasizedValues: ["30 gold", "3"], expiryTone: "expires-soon" },
-            { emphasizedValues: ["40 gold", "4"], expiryTone: "expires-soon" },
-            { emphasizedValues: ["50 gold", "5"], expiryTone: "expires-soon" },
-            { emphasizedValues: ["60 gold", "6"], expiryTone: "" },
+            { emphasizedValues: ["30", "3"], expiryTone: "expires-soon" },
+            { emphasizedValues: ["40", "4"], expiryTone: "expires-soon" },
+            { emphasizedValues: ["50", "5"], expiryTone: "expires-soon" },
+            { emphasizedValues: ["60", "6"], expiryTone: "" },
         ]);
     });
 

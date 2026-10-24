@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 public record GameMessage(
     MessageId adId,
     String message,
-    String reward,
+    int reward,
     int expiresIn,
     @Nullable String probability
 ) {

@@ -190,7 +190,7 @@
                                 on:click={() => (selectedMessage = message)}
                                 aria-label={`Open message: ${message.message}`}
                             >
-                                {#if message.reward}
+                                {#if message.reward !== undefined}
                                     <span class="paper-stamp">REWARD · <strong>{message.reward}</strong></span>
                                 {:else}
                                     <span class="paper-stamp">KINGDOM POST</span>
@@ -203,7 +203,7 @@
                                 </span>
                                 <span class="paper-meta">
                                     <span>
-                                        {#if message.expiresIn}
+                                        {#if message.expiresIn !== undefined}
                                             Expires in
                                             <strong
                                                 class:expires-urgent={expirationTone(message.expiresIn) === "urgent"}
@@ -244,7 +244,7 @@
             <p class="eyebrow">A message for the adventurer</p>
             <h2 id="message-heading">{selectedMessage.message}</h2>
             <div class="message-details">
-                {#if selectedMessage.reward}<span>Reward <strong>{selectedMessage.reward}</strong></span>{/if}
+                {#if selectedMessage.reward !== undefined}<span>Reward <strong>{selectedMessage.reward}</strong></span>{/if}
                 {#if selectedMessage.probability}
                     <span>Probability <strong>{selectedMessage.probability}</strong></span>{/if}
             </div>

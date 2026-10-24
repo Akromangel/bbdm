@@ -1,7 +1,5 @@
 package kuchma.mike.bbdm.infrastructure.client;
 
-import java.util.List;
-
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.ItemId;
@@ -36,8 +34,6 @@ class DragonsOfMugloarRestClientTest {
     private static final String GAME_ID = "game-1";
 
     private static final String START_GAME_PATH = "/api/v2/game/start";
-
-    private static final String GAME_PATH = "/api/v2/" + GAME_ID;
 
     private static final String START_GAME_RESPONSE =
         """
@@ -113,14 +109,14 @@ class DragonsOfMugloarRestClientTest {
                       {
                         "adId": "ad-1",
                         "message": "Task",
-                        "reward": "10",
+                        "reward": 10,
                         "expiresIn": 3,
                         "probability": "75%"
                       },
                       {
                         "adId": "ad-2",
                         "message": "Another task",
-                        "reward": "5",
+                        "reward": 5,
                         "expiresIn": 4
                       }
                     ]
@@ -132,8 +128,8 @@ class DragonsOfMugloarRestClientTest {
         assertThat(client.getMessages(new GameId(GAME_ID)))
             .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))))
             .containsExactly(
-                new GameMessage(new MessageId("ad-1"), "Task", "10", 3, "75%"),
-                new GameMessage(new MessageId("ad-2"), "Another task", "5", 4, null)
+                new GameMessage(new MessageId("ad-1"), "Task", 10, 3, "75%"),
+                new GameMessage(new MessageId("ad-2"), "Another task", 5, 4, null)
             );
     }
 

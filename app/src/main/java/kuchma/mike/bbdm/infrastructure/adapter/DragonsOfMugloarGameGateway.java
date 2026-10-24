@@ -1,5 +1,6 @@
 package kuchma.mike.bbdm.infrastructure.adapter;
 
+import java.util.Comparator;
 import java.util.List;
 
 import kuchma.mike.bbdm.domain.model.GameId;
@@ -33,7 +34,13 @@ public class DragonsOfMugloarGameGateway implements GameGateway {
 
     @Override
     public MessageBoard getMessages(final GameId gameId) {
-        List<GameMessage> messages = restClient.getMessages(gameId);
+        List<GameMessage> messages = restClient.getMessages(gameId)
+            .stream()
+            .sorted(
+                Comparator.comparingInt(GameMessage::expiresIn)
+                    .thenComparing(Comparator.comparingInt(GameMessage::reward).reversed())
+            )
+            .toList();
         return new MessageBoard(messages);
     }
 

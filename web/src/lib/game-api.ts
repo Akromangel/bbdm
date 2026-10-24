@@ -15,7 +15,7 @@ export interface GameState {
 export interface Message {
     adId: string;
     message: string;
-    reward?: string | number;
+    reward?: number;
     probability?: string | null;
     expiresIn?: string | number;
 }
