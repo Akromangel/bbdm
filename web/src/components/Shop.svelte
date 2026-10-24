@@ -64,14 +64,17 @@
             <p class="eyebrow">A well-stocked merchant</p>
             <h2 id="shop-heading">The shop <span class="gold-symbol">◈</span></h2>
             {#if shopItems.length}
-                <div class="shop-list">
+                <div class="shop-grid">
                     {#each shopItems as item}
-                        <div class="shop-item">
-                            <div>
-                                <strong>{item.name ?? item.id}</strong><span>{item.cost ? `${item.cost} gold` : item.description ?? "Useful for the journey"}</span>
-                            </div>
-                            <button class="buy-button" disabled={busy} on:click={() => buyItem(item)}>Buy</button>
-                        </div>
+                        <article class="shop-card">
+                            <h3>{item.name ?? item.id}</h3>
+                            <p class="item-price">{item.cost != null ? `${item.cost} gold` : "Price unavailable"}</p>
+                            <button
+                                class="buy-button"
+                                disabled={busy || item.cost == null || item.cost > (game.gold ?? 0)}
+                                on:click={() => buyItem(item)}
+                            >Buy</button>
+                        </article>
                     {/each}
                 </div>
             {:else}
@@ -103,38 +106,47 @@
         margin-bottom: 24px;
     }
 
-    .shop-list {
-        display: grid;
-        gap: 9px;
+    .shop-modal {
+        width: min(900px, 100%);
     }
 
-    .shop-item {
+    .shop-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .shop-card {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 15px;
-        padding: 13px;
+        min-width: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 14px;
         border: 1px solid #d4cbb6;
     }
 
-    .shop-item div {
-        display: grid;
-        gap: 5px;
-    }
-
-    .shop-item strong {
+    .shop-card h3 {
+        margin: 0;
+        overflow-wrap: anywhere;
         font:
             500 16px "Playfair Display",
             serif;
     }
 
-    .shop-item span,
+    .item-price {
+        margin: 0;
+        color: #6f796d;
+        font-size: 12px;
+    }
+
     .shop-empty {
         color: #6f796d;
         font-size: 11px;
     }
 
     .buy-button {
+        margin-top: auto;
         padding: 8px 13px;
         border: 0;
         background: #253a2d;
@@ -142,7 +154,23 @@
         font-size: 11px;
     }
 
+    .buy-button:disabled {
+        cursor: not-allowed;
+    }
+
     .shop-empty {
         margin-bottom: 0;
+    }
+
+    @media (max-width: 640px) {
+        .shop-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 420px) {
+        .shop-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
