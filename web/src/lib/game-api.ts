@@ -16,7 +16,7 @@ export interface Message {
     adId: string;
     message: string;
     reward?: string | number;
-    probability?: string;
+    probability?: string | null;
     expiresIn?: string | number;
 }
 

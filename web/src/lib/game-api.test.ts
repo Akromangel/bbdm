@@ -42,7 +42,13 @@ describe("game API", () => {
             .mockResolvedValueOnce(
                 new Response(
                     JSON.stringify({
-                        messages: [{ adId: "ad-1", message: "Help" }],
+                        messages: [
+                            {
+                                adId: "ad-1",
+                                message: "Help",
+                                probability: "75%",
+                            },
+                        ],
                     }),
                 ),
             )
@@ -54,7 +60,7 @@ describe("game API", () => {
         vi.stubGlobal("fetch", fetchMock);
 
         await expect(fetchMessages("game/1")).resolves.toEqual([
-            { adId: "ad-1", message: "Help" },
+            { adId: "ad-1", message: "Help", probability: "75%" },
         ]);
         await expect(fetchShop("game/1")).resolves.toEqual([
             { id: "potion", name: "Potion" },

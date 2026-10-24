@@ -114,7 +114,14 @@ class DragonsOfMugloarRestClientTest {
                         "adId": "ad-1",
                         "message": "Task",
                         "reward": "10",
-                        "expiresIn": 3
+                        "expiresIn": 3,
+                        "probability": "75%"
+                      },
+                      {
+                        "adId": "ad-2",
+                        "message": "Another task",
+                        "reward": "5",
+                        "expiresIn": 4
                       }
                     ]
                     """
@@ -124,7 +131,10 @@ class DragonsOfMugloarRestClientTest {
 
         assertThat(client.getMessages(new GameId(GAME_ID)))
             .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))))
-            .containsExactly(new GameMessage(new MessageId("ad-1"), "Task", "10", 3));
+            .containsExactly(
+                new GameMessage(new MessageId("ad-1"), "Task", "10", 3, "75%"),
+                new GameMessage(new MessageId("ad-2"), "Another task", "5", 4, null)
+            );
     }
 
     @Test

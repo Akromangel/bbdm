@@ -60,6 +60,23 @@ describe("visual adventure page", () => {
         expect(api.fetchMessages).toHaveBeenCalledWith("game-1");
     });
 
+    it("displays the board probability beneath each message", async () => {
+        api.fetchMessages.mockResolvedValueOnce([
+            {
+                adId: "ad-1",
+                message: "Rescue the baker",
+                probability: "75%",
+            },
+        ]);
+        render(VisualAdventurePage);
+
+        const probability = await screen.findByText("Probability: 75%");
+        expect(
+            probability.parentElement?.querySelector(".paper-title")
+                ?.textContent,
+        ).toBe("Rescue the baker");
+    });
+
     it("emphasizes rewards and colors expiry values by urgency", async () => {
         const expiryDays = [1, 2, 3, 4, 5, 6];
         api.fetchMessages.mockResolvedValueOnce(

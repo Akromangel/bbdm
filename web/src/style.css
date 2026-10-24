@@ -371,10 +371,16 @@ button:disabled {
         sans-serif;
 }
 .paper-title {
-    margin: 18px 0 auto;
+    margin: 0;
     font:
         500 17px / 1.38 "Playfair Display",
         serif;
+}
+.paper-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 18px 0 auto;
 }
 .paper-meta {
     display: flex;

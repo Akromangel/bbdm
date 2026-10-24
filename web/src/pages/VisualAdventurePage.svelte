@@ -195,9 +195,13 @@
                                 {:else}
                                     <span class="paper-stamp">KINGDOM POST</span>
                                 {/if}
-                                <span class="paper-title">{message.message}</span>
+                                <span class="paper-content">
+                                    <span class="paper-title">{message.message}</span>
+                                    {#if message.probability}
+                                        <span class="paper-probability">Probability: {message.probability}</span>
+                                    {/if}
+                                </span>
                                 <span class="paper-meta">
-                                    <span>{message.probability ? `Odds ${message.probability}` : "A matter awaits"}</span>
                                     <span>
                                         {#if message.expiresIn}
                                             Expires in
