@@ -30,7 +30,9 @@
     }
 
     async function buyItem(item: ShopItem) {
-        if (busy) return;
+        if (busy) {
+            return;
+        }
         busy = true;
         try {
             const outcome = await purchaseItem(game.gameId, item);

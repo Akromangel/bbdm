@@ -13,7 +13,6 @@
     --gold: #d7b967;
     --green: #718d71;
 }
-
 * {
     box-sizing: border-box;
 }
@@ -33,7 +32,6 @@ a {
     color: inherit;
     text-decoration: none;
 }
-
 .landing {
     position: relative;
     display: grid;
@@ -179,7 +177,6 @@ button:disabled {
     left: 34%;
     font-size: 34px;
 }
-
 .game-shell {
     min-height: 100vh;
     background: #17251f;
@@ -367,6 +364,12 @@ button:disabled {
     color: #8d7d55;
     font-size: 8px;
 }
+.paper-stamp strong {
+    color: #5b4a20;
+    font:
+        700 10px "DM Sans",
+        sans-serif;
+}
 .paper-title {
     margin: 18px 0 auto;
     font:
@@ -381,6 +384,17 @@ button:disabled {
     color: #697267;
     font-family: "DM Mono", monospace;
     font-size: 9px;
+}
+.paper-meta strong {
+    font:
+        700 11px "DM Sans",
+        sans-serif;
+}
+.paper-meta .expires-urgent {
+    color: #b42318;
+}
+.paper-meta .expires-soon {
+    color: #9a7300;
 }
 .empty-board {
     display: grid;
@@ -434,7 +448,6 @@ button:disabled {
         transform: rotate(360deg);
     }
 }
-
 .modal-backdrop {
     position: fixed;
     z-index: 3;

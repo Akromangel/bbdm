@@ -60,6 +60,47 @@ describe("visual adventure page", () => {
         expect(api.fetchMessages).toHaveBeenCalledWith("game-1");
     });
 
+    it("emphasizes rewards and colors expiry values by urgency", async () => {
+        const expiryDays = [1, 2, 3, 4, 5, 6];
+        api.fetchMessages.mockResolvedValueOnce(
+            expiryDays.map((expiresIn) => ({
+                adId: `ad-${expiresIn}`,
+                message: `Quest ${expiresIn}`,
+                reward: `${expiresIn * 10} gold`,
+                expiresIn,
+            })),
+        );
+        render(VisualAdventurePage);
+
+        const cards = await screen.findAllByRole("button", {
+            name: /open message/i,
+        });
+
+        expect(
+            cards.map((card) => ({
+                emphasizedValues: Array.from(
+                    card.querySelectorAll("strong"),
+                    (element) => element.textContent,
+                ),
+                expiryTone:
+                    card.querySelector(".paper-meta strong")?.className ?? "",
+            })),
+        ).toEqual([
+            {
+                emphasizedValues: ["10 gold", "1"],
+                expiryTone: "expires-urgent",
+            },
+            {
+                emphasizedValues: ["20 gold", "2"],
+                expiryTone: "expires-urgent",
+            },
+            { emphasizedValues: ["30 gold", "3"], expiryTone: "expires-soon" },
+            { emphasizedValues: ["40 gold", "4"], expiryTone: "expires-soon" },
+            { emphasizedValues: ["50 gold", "5"], expiryTone: "expires-soon" },
+            { emphasizedValues: ["60 gold", "6"], expiryTone: "" },
+        ]);
+    });
+
     it("resolves a selected message and refreshes the board", async () => {
         api.fetchMessages
             .mockResolvedValueOnce([

@@ -34,9 +34,22 @@
         return cause instanceof Error ? cause.message : String(cause);
     }
 
+    function expirationTone(expiresIn: Message["expiresIn"]): "urgent" | "soon" | undefined {
+        const days = Number(expiresIn);
+        if (days === 1 || days === 2) {
+            return "urgent";
+        }
+        if (days >= 3 && days <= 5) {
+            return "soon";
+        }
+        return undefined;
+    }
+
     function dismissToast(id: number) {
         const timeout = toastTimeouts.get(id);
-        if (timeout) clearTimeout(timeout);
+        if (timeout) {
+            clearTimeout(timeout);
+        }
         toastTimeouts.delete(id);
         toasts = toasts.filter((toast) => toast.id !== id);
     }
@@ -64,11 +77,15 @@
     }
 
     async function refreshMessages() {
-        if (game) messages = await fetchMessages(game.gameId);
+        if (game) {
+            messages = await fetchMessages(game.gameId);
+        }
     }
 
     function updateGame(outcome: ActionOutcome) {
-        if (!game) return;
+        if (!game) {
+            return;
+        }
         const update = outcome.game ?? outcome;
         const previousLives = game.lives;
         const updatedLives = update.lives;
@@ -84,7 +101,9 @@
     }
 
     async function dealWithMessage() {
-        if (!selectedMessage || !game || busy) return;
+        if (!selectedMessage || !game || busy) {
+            return;
+        }
         busy = true;
         try {
             const outcome = await resolveMessage(game.gameId, selectedMessage.adId);
@@ -171,12 +190,26 @@
                                 on:click={() => (selectedMessage = message)}
                                 aria-label={`Open message: ${message.message}`}
                             >
-                                <span
-                                    class="paper-stamp">{message.reward ? `REWARD · ${message.reward}` : "KINGDOM POST"}</span>
+                                {#if message.reward}
+                                    <span class="paper-stamp">REWARD · <strong>{message.reward}</strong></span>
+                                {:else}
+                                    <span class="paper-stamp">KINGDOM POST</span>
+                                {/if}
                                 <span class="paper-title">{message.message}</span>
                                 <span class="paper-meta">
                                     <span>{message.probability ? `Odds ${message.probability}` : "A matter awaits"}</span>
-                                    <span>{message.expiresIn ? `Expires in ${message.expiresIn}` : "Read & respond"} →</span>
+                                    <span>
+                                        {#if message.expiresIn}
+                                            Expires in
+                                            <strong
+                                                class:expires-urgent={expirationTone(message.expiresIn) === "urgent"}
+                                                class:expires-soon={expirationTone(message.expiresIn) === "soon"}
+                                            >{message.expiresIn}</strong>
+                                        {:else}
+                                            Read & respond
+                                        {/if}
+                                        →
+                                    </span>
                                 </span>
                             </button>
                         {/each}
