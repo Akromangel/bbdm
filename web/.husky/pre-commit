@@ -1,0 +1,11 @@
+cd web || exit 1
+
+git diff --cached --name-only --diff-filter=ACMR -- src/ |
+    while IFS= read -r file; do
+        file=${file#web/}
+        case "$file" in
+            src/*.css|src/*.js|src/*.jsx|src/*.mjs|src/*.cjs|src/*.ts|src/*.tsx|src/*.json|src/*.jsonc)
+                npx biome check "$file" || exit 1
+                ;;
+        esac
+    done

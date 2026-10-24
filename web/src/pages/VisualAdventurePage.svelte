@@ -1,0 +1,257 @@
+<script lang="ts">
+    import {
+        fetchMessages,
+        fetchShop,
+        purchaseItem,
+        resolveMessage,
+        startGame,
+        type ActionOutcome,
+        type GameState,
+        type Message,
+        type ReputationGroup,
+        type ShopItem,
+    } from "../lib/game-api";
+
+    let game: GameState | null = null;
+    let messages: Message[] = [];
+    let shopItems: ShopItem[] = [];
+    let selectedMessage: Message | null = null;
+    let showShop = false;
+    let busy = false;
+    let error = "";
+    let result = "";
+
+    const statistics: { key: keyof GameState; label: string; icon: string }[] = [
+        { key: "lives", label: "Lives", icon: "♥" },
+        { key: "gold", label: "Gold", icon: "◈" },
+        { key: "level", label: "Level", icon: "⌁" },
+        { key: "score", label: "Score", icon: "✦" },
+        { key: "highScore", label: "Best", icon: "♛" },
+        { key: "turn", label: "Day", icon: "↻" },
+    ];
+    const reputations: ReputationGroup[] = ["people", "state", "underworld"];
+
+    function errorMessage(cause: unknown): string {
+        return cause instanceof Error ? cause.message : String(cause);
+    }
+
+    async function openAdventure() {
+        busy = true;
+        error = "";
+        try {
+            game = await startGame();
+            messages = await fetchMessages(game.gameId);
+        } catch (cause) {
+            error = `The adventure could not be started. ${errorMessage(cause)}`;
+        } finally {
+            busy = false;
+        }
+    }
+
+    async function refreshMessages() {
+        if (game) messages = await fetchMessages(game.gameId);
+    }
+
+    function updateGame(outcome: ActionOutcome) {
+        if (!game) return;
+        const update = outcome.game ?? outcome;
+        game = { ...game, ...update, gameId: update.gameId ?? game.gameId };
+    }
+
+    async function dealWithMessage(action: boolean) {
+        if (!selectedMessage || !game || busy) return;
+        busy = true;
+        error = "";
+        result = "";
+        try {
+            const outcome = await resolveMessage(game.gameId, selectedMessage.adId, action);
+            updateGame(outcome);
+            result = outcome.message ?? outcome.result ?? "The message has been resolved.";
+            selectedMessage = null;
+            try {
+                await refreshMessages();
+            } catch (cause) {
+                error = `Your response was recorded, but the messages could not be refreshed. ${errorMessage(cause)}`;
+            }
+        } catch (cause) {
+            error = `That action could not be completed. ${errorMessage(cause)}`;
+        } finally {
+            busy = false;
+        }
+    }
+
+    async function loadShop() {
+        if (!game) return;
+        showShop = true;
+        error = "";
+        try {
+            shopItems = await fetchShop(game.gameId);
+        } catch (cause) {
+            error = `The shop could not be loaded. ${errorMessage(cause)}`;
+        }
+    }
+
+    async function buyItem(item: ShopItem) {
+        if (!game || busy) return;
+        busy = true;
+        error = "";
+        try {
+            const outcome = await purchaseItem(game.gameId, item);
+            updateGame(outcome);
+            result = outcome.message ?? "Purchase complete.";
+            try {
+                shopItems = await fetchShop(game.gameId);
+            } catch (cause) {
+                error = `Your purchase was recorded, but the shop could not be refreshed. ${errorMessage(cause)}`;
+            }
+        } catch (cause) {
+            error = `The purchase could not be completed. ${errorMessage(cause)}`;
+        } finally {
+            busy = false;
+        }
+    }
+
+    openAdventure();
+</script>
+
+<svelte:head>
+    <title>Adventure — Mugloar</title>
+</svelte:head>
+
+<main class="game-shell">
+    <header class="topbar">
+        <a class="wordmark" href="/" aria-label="Return home"><span class="mark">✳</span> MUGLOAR <span
+            class="wordmark-sub">/ FIELD JOURNAL</span></a>
+    </header>
+
+    {#if busy && !game}
+        <section class="loading"><span class="spinner"></span>
+            <p>Opening the field journal…</p></section>
+    {:else if game}
+        <section class="dashboard">
+            <div class="dashboard-heading">
+                <div>
+                    <p class="eyebrow">Your adventure</p>
+                    <h1>Field journal <span class="gold-symbol">✦</span></h1>
+                </div>
+                <button class="shop-button" on:click={loadShop}><span>◈</span> Visit the shop</button>
+            </div>
+
+            <div class="stat-grid">
+                {#each statistics as stat}
+                    <div class="stat-card">
+                        <span class="stat-icon">{stat.icon}</span>
+                        <span class="stat-label">{stat.label}</span>
+                        <strong>{game[stat.key] ?? 0}</strong>
+                    </div>
+                {/each}
+            </div>
+
+            <section class="reputation">
+                <div class="section-caption"><span>REPUTATION</span><span class="caption-line"></span></div>
+                <div class="reputation-grid">
+                    {#each reputations as group}
+                        <div class="reputation-item">
+                            <span>{group}</span><strong>{game.reputation?.[group] ?? 0}</strong></div>
+                    {/each}
+                </div>
+            </section>
+
+            {#if result}
+                <div class="result-note" role="status"><span>✦</span> {result}</div>
+            {/if}
+            {#if error}
+                <div class="error-note" role="alert">{error}</div>
+            {/if}
+
+            <section class="notice-board">
+                <div class="board-heading">
+                    <div><p class="eyebrow">Fresh from the kingdom</p>
+                        <h2>Messages <span class="count">{messages.length}</span></h2></div>
+                    <span class="board-hint">SELECT A SHEET TO RESPOND</span>
+                </div>
+                {#if messages.length}
+                    <div class="message-grid">
+                        {#each messages as message, index (message.adId)}
+                            <button
+                                class="paper"
+                                class:paper-featured={index === 0}
+                                on:click={() => (selectedMessage = message)}
+                                aria-label={`Open message: ${message.message}`}
+                            >
+                                <span
+                                    class="paper-stamp">{message.reward ? `REWARD · ${message.reward}` : "KINGDOM POST"}</span>
+                                <span class="paper-title">{message.message}</span>
+                                <span class="paper-meta">
+                                    <span>{message.probability ? `Odds ${message.probability}` : "A matter awaits"}</span>
+                                    <span>{message.expiresIn ? `Expires in ${message.expiresIn}` : "Read & respond"} →</span>
+                                </span>
+                            </button>
+                        {/each}
+                    </div>
+                {:else}
+                    <div class="empty-board"><span>✧</span>
+                        <p>The board is quiet for now.</p></div>
+                {/if}
+            </section>
+        </section>
+    {:else}
+        <section class="loading"><p>The adventure could not be opened.</p>
+            {#if error}
+                <div class="error-note" role="alert">{error}</div>
+            {/if}
+            <button class="primary-button retry" on:click={openAdventure}>Try again</button>
+        </section>
+    {/if}
+
+    <footer class="game-footer"><span>KEEP YOUR WITS ABOUT YOU</span><span>✳</span><span>THE DRAGON IS ALWAYS WATCHING</span>
+    </footer>
+</main>
+
+{#if selectedMessage}
+    <div class="modal-backdrop" role="presentation"
+         on:click={(event) => event.target === event.currentTarget && (selectedMessage = null)}>
+        <div class="message-modal" role="dialog" aria-modal="true" aria-labelledby="message-heading" tabindex="-1">
+            <button class="close-button" aria-label="Close message" on:click={() => (selectedMessage = null)}>×</button>
+            <p class="eyebrow">A message for the adventurer</p>
+            <h2 id="message-heading">{selectedMessage.message}</h2>
+            <div class="message-details">
+                {#if selectedMessage.reward}<span>Reward <strong>{selectedMessage.reward}</strong></span>{/if}
+                {#if selectedMessage.probability}
+                    <span>Probability <strong>{selectedMessage.probability}</strong></span>{/if}
+            </div>
+            <p class="modal-prompt">Will you take on this task?</p>
+            <div class="modal-actions">
+                <button class="primary-button" disabled={busy}
+                        on:click={() => dealWithMessage(true)}>{busy ? "Working…" : "Accept the challenge"}</button>
+                <button class="quiet-button" disabled={busy} on:click={() => dealWithMessage(false)}>Pass this time
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
+{#if showShop}
+    <div class="modal-backdrop" role="presentation"
+         on:click={(event) => event.target === event.currentTarget && (showShop = false)}>
+        <div class="shop-modal" role="dialog" aria-modal="true" aria-labelledby="shop-heading" tabindex="-1">
+            <button class="close-button" aria-label="Close shop" on:click={() => (showShop = false)}>×</button>
+            <p class="eyebrow">A well-stocked merchant</p>
+            <h2 id="shop-heading">The shop <span class="gold-symbol">◈</span></h2>
+            {#if shopItems.length}
+                <div class="shop-list">
+                    {#each shopItems as item}
+                        <div class="shop-item">
+                            <div>
+                                <strong>{item.name ?? item.id}</strong><span>{item.cost ? `${item.cost} gold` : item.description ?? "Useful for the journey"}</span>
+                            </div>
+                            <button class="buy-button" disabled={busy} on:click={() => buyItem(item)}>Buy</button>
+                        </div>
+                    {/each}
+                </div>
+            {:else}
+                <p class="shop-empty">No wares are on display at the moment.</p>
+            {/if}
+        </div>
+    </div>
+{/if}

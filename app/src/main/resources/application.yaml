@@ -1,0 +1,8 @@
+spring:
+    application:
+        name: bbdm
+server:
+    port: 8080
+dragonsofmugloar:
+    api:
+        base-url: https://dragonsofmugloar.com
