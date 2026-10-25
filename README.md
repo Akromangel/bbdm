@@ -2,14 +2,15 @@
 
 A Svelte adventure dashboard for Dragons of Mugloar, backed by a Java and Spring Boot 4 API proxy.
 
-## Run with Docker
+## Run with Gradle and Docker
 
-Build and start the full application from the repository root:
+Build the web app, create the Docker image, and start the application container from the repository root:
 
 ```shell
-docker build -t bbdm .
-docker run --rm -p 4200:4200 bbdm
+./gradlew runDocker
 ```
+
+On Windows, use `.\gradlew.bat runDocker`.
 
 Open <http://localhost:4200>. The container serves the web app and its `/api` endpoints from the same port.
 
