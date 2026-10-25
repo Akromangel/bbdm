@@ -1,47 +1,54 @@
 package kuchma.mike.bbdm.infrastructure.adapter;
 
 import kuchma.mike.bbdm.domain.model.GameId;
+import kuchma.mike.bbdm.domain.model.ItemId;
+import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
+import kuchma.mike.bbdm.domain.model.MessageBoard;
 import kuchma.mike.bbdm.domain.model.MessageDecision;
 import kuchma.mike.bbdm.domain.model.MessageId;
+import kuchma.mike.bbdm.domain.model.MessageResolution;
+import kuchma.mike.bbdm.domain.model.ShopInventory;
 import kuchma.mike.bbdm.domain.model.ShopItemId;
+import kuchma.mike.bbdm.domain.model.StartedGame;
 import kuchma.mike.bbdm.domain.port.GameGateway;
 import kuchma.mike.bbdm.infrastructure.client.DragonsOfMugloarRestClient;
+
 import org.springframework.stereotype.Component;
 
 @Component
 public class DragonsOfMugloarGameGateway implements GameGateway {
     private final DragonsOfMugloarRestClient restClient;
 
-    public DragonsOfMugloarGameGateway(DragonsOfMugloarRestClient restClient) {
+    public DragonsOfMugloarGameGateway(final DragonsOfMugloarRestClient restClient) {
         this.restClient = restClient;
     }
 
     @Override
-    public Object startGame() {
+    public StartedGame startGame() {
         return restClient.startGame();
     }
 
     @Override
-    public Object getMessages(GameId gameId) {
-        return restClient.getMessages(gameId.value());
+    public MessageBoard getMessages(final GameId gameId) {
+        return restClient.getMessages(gameId);
     }
 
     @Override
-    public Object dealWithMessage(GameId gameId, MessageId messageId, MessageDecision decision) {
+    public MessageResolution dealWithMessage(final GameId gameId, final MessageId messageId, final MessageDecision decision) {
         return restClient.dealWithMessage(
-            gameId.value(),
-            messageId.value(),
-            new DragonsOfMugloarRestClient.DealMessageRequest(decision.toUpstreamValue())
+            gameId,
+            messageId,
+            decision
         );
     }
 
     @Override
-    public Object getShop(GameId gameId) {
-        return restClient.getShop(gameId.value());
+    public ShopInventory getShop(final GameId gameId) {
+        return restClient.getShop(gameId);
     }
 
     @Override
-    public Object buyItem(GameId gameId, ShopItemId itemId) {
-        return restClient.buyItem(gameId.value(), itemId.value());
+    public ItemPurchaseResult buyItem(final GameId gameId, final ShopItemId itemId) {
+        return restClient.buyItem(gameId, new ItemId(itemId.value()));
     }
 }

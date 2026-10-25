@@ -22,7 +22,7 @@ class OnionArchitectureTest {
         .layer(APPLICATION_LAYER).definedBy("..application..")
         .layer(DOMAIN_LAYER).definedBy("..domain..")
         .layer("Infrastructure").definedBy("..infrastructure..")
-        .whereLayer("Presentation").mayOnlyAccessLayers(APPLICATION_LAYER)
+        .whereLayer("Presentation").mayOnlyAccessLayers(APPLICATION_LAYER, DOMAIN_LAYER)
         .whereLayer(APPLICATION_LAYER).mayOnlyAccessLayers(DOMAIN_LAYER)
         .whereLayer("Infrastructure").mayOnlyAccessLayers(APPLICATION_LAYER, DOMAIN_LAYER)
         .whereLayer(DOMAIN_LAYER).mayNotAccessAnyLayer();

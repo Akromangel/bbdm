@@ -1,78 +1,109 @@
 package kuchma.mike.bbdm.application;
 
+import java.util.List;
+
 import kuchma.mike.bbdm.domain.model.GameId;
+import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
+import kuchma.mike.bbdm.domain.model.MessageBoard;
 import kuchma.mike.bbdm.domain.model.MessageDecision;
 import kuchma.mike.bbdm.domain.model.MessageId;
+import kuchma.mike.bbdm.domain.model.MessageResolution;
+import kuchma.mike.bbdm.domain.model.ShopInventory;
 import kuchma.mike.bbdm.domain.model.ShopItemId;
+import kuchma.mike.bbdm.domain.model.StartedGame;
 import kuchma.mike.bbdm.domain.port.GameGateway;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GameServiceTest {
     private static final String GAME_ID = "game-1";
 
     @Test
-    void dealsWithMessagesThroughTheDomainPort() {
+    void shouldRecordTheGatewayInteractionForSuccessfulMessageDecision() {
         RecordingGameGateway gateway = new RecordingGameGateway();
         GameService gameService = new GameService(gateway);
 
-        Object result = gameService.dealWithMessage(GAME_ID, "message-1", new DealMessageCommand("true"));
+        gameService.dealWithMessage(new GameId(GAME_ID), new MessageId("message-1"), new DealMessageCommand("true"));
 
-        assertEquals(GAME_ID, gateway.gameId);
-        assertEquals("message-1", gateway.messageId);
-        assertEquals(new MessageDecision(true), gateway.decision);
-        assertEquals(Map.of("gold", 42), result);
+        assertThat(gateway.interaction())
+            .returns(GAME_ID, GatewayInteraction::gameId)
+            .returns("message-1", GatewayInteraction::messageId)
+            .returns(new MessageDecision(true), GatewayInteraction::decision);
     }
 
     @Test
-    void rejectsInvalidMessageDecisionsBeforeCallingTheGateway() {
+    void shouldReturnTheResolvedMessageOutcome() {
         RecordingGameGateway gateway = new RecordingGameGateway();
         GameService gameService = new GameService(gateway);
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> gameService.dealWithMessage("game-1", "message-1", new DealMessageCommand("maybe"))
-        );
-        assertNull(gateway.messageId);
+        MessageResolution result =
+            gameService.dealWithMessage(
+                new GameId(GAME_ID),
+                new MessageId("message-1"),
+                new DealMessageCommand("true")
+            );
+
+        assertThat(result)
+            .returns(true, MessageResolution::success)
+            .returns(2, MessageResolution::lives)
+            .returns(42L, MessageResolution::gold)
+            .returns(8, MessageResolution::score)
+            .returns(12, MessageResolution::highScore)
+            .returns(3, MessageResolution::turn)
+            .returns("Result", MessageResolution::message);
+    }
+
+    @Test
+    void shouldRejectInvalidMessageDecisionsBeforeCallingTheGateway() {
+        RecordingGameGateway gateway = new RecordingGameGateway();
+        GameService gameService = new GameService(gateway);
+
+        assertThatThrownBy(
+            () -> gameService.dealWithMessage(
+                new GameId("game-1"),
+                new MessageId("message-1"),
+                new DealMessageCommand("maybe")
+            )
+        ).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private record GatewayInteraction(String gameId, String messageId, MessageDecision decision) {
     }
 
     private static final class RecordingGameGateway implements GameGateway {
-        private String gameId;
-        private String messageId;
-        private MessageDecision decision;
+        private GatewayInteraction interaction;
 
         @Override
-        public Object startGame() {
-            return Map.of("gameId", GAME_ID);
+        public StartedGame startGame() {
+            return new StartedGame(GAME_ID, 3, 10, 1, 0, 0, 0);
         }
 
         @Override
-        public Object getMessages(GameId gameId) {
-            this.gameId = gameId.value();
-            return List.of();
+        public MessageBoard getMessages(GameId gameId) {
+            return new MessageBoard(List.of());
         }
 
         @Override
-        public Object dealWithMessage(GameId gameId, MessageId messageId, MessageDecision decision) {
-            this.gameId = gameId.value();
-            this.messageId = messageId.value();
-            this.decision = decision;
-            return Map.of("gold", 42);
+        public MessageResolution dealWithMessage(GameId gameId, MessageId messageId, MessageDecision decision) {
+            this.interaction = new GatewayInteraction(gameId.value(), messageId.value(), decision);
+            return new MessageResolution(true, 2, 42, 8, 12, 3, "Result");
         }
 
         @Override
-        public Object getShop(GameId gameId) {
-            return List.of();
+        public ShopInventory getShop(GameId gameId) {
+            return new ShopInventory(List.of());
         }
 
         @Override
-        public Object buyItem(GameId gameId, ShopItemId itemId) {
-            return Map.of();
+        public ItemPurchaseResult buyItem(GameId gameId, ShopItemId itemId) {
+            return new ItemPurchaseResult(true, 5, 3, 1, 2);
+        }
+
+        private GatewayInteraction interaction() {
+            return interaction;
         }
     }
 }

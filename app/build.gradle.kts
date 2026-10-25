@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.dependency.updates)
+    alias(libs.plugins.tabletest.reporter)
     pmd
     checkstyle
     jacoco
@@ -24,9 +25,12 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-restclient")
+    implementation(libs.jspecify)
 
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation(libs.archunit.junit5)
+    testImplementation(libs.tabletest.junit)
+    testImplementation(libs.wiremock)
 }
 
 tasks.withType<JavaCompile> {

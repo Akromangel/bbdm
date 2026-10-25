@@ -4,6 +4,7 @@ import kuchma.mike.bbdm.application.GameService;
 import kuchma.mike.bbdm.domain.port.GameGateway;
 import kuchma.mike.bbdm.infrastructure.client.DragonsOfMugloarRestClient;
 import kuchma.mike.bbdm.infrastructure.client.UpstreamLoggingInterceptor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,7 @@ public class GameApiConfiguration {
     ) {
         RestClient restClient = RestClient.builder()
             .baseUrl(baseUrl)
-            .bufferContent((uri, method) -> upstreamLog.isDebugEnabled())
+            .bufferContent((_, _) -> upstreamLog.isDebugEnabled())
             .requestInterceptor(new UpstreamLoggingInterceptor())
             .build();
         HttpServiceProxyFactory proxyFactory = HttpServiceProxyFactory

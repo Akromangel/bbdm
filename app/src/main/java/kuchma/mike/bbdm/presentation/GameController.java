@@ -2,6 +2,14 @@ package kuchma.mike.bbdm.presentation;
 
 import kuchma.mike.bbdm.application.DealMessageCommand;
 import kuchma.mike.bbdm.application.GameService;
+import kuchma.mike.bbdm.domain.model.GameId;
+import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
+import kuchma.mike.bbdm.domain.model.MessageBoard;
+import kuchma.mike.bbdm.domain.model.MessageId;
+import kuchma.mike.bbdm.domain.model.MessageResolution;
+import kuchma.mike.bbdm.domain.model.ShopInventory;
+import kuchma.mike.bbdm.domain.model.StartedGame;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,32 +32,32 @@ public class GameController {
     }
 
     @PostMapping("/game")
-    public Object startGame() {
+    public StartedGame startGame() {
         return gameService.startGame();
     }
 
     @GetMapping("/{" + GAME_ID_PATH_VARIABLE + "}/messages")
-    public Object getMessages(@PathVariable(GAME_ID_PATH_VARIABLE) String gameId) {
+    public MessageBoard getMessages(@PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId) {
         return gameService.getMessages(gameId);
     }
 
     @PostMapping("/{" + GAME_ID_PATH_VARIABLE + "}/messages/{" + MESSAGE_ID_PATH_VARIABLE + "}")
-    public Object dealWithMessage(
-        @PathVariable(GAME_ID_PATH_VARIABLE) String gameId,
-        @PathVariable(MESSAGE_ID_PATH_VARIABLE) String messageId,
+    public MessageResolution dealWithMessage(
+        @PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId,
+        @PathVariable(MESSAGE_ID_PATH_VARIABLE) MessageId messageId,
         @RequestBody DealMessageCommand command
     ) {
         return gameService.dealWithMessage(gameId, messageId, command);
     }
 
     @GetMapping("/{" + GAME_ID_PATH_VARIABLE + "}/shop")
-    public Object getShop(@PathVariable(GAME_ID_PATH_VARIABLE) String gameId) {
+    public ShopInventory getShop(@PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId) {
         return gameService.getShop(gameId);
     }
 
     @PostMapping("/{" + GAME_ID_PATH_VARIABLE + "}/shop/{" + ITEM_ID_PATH_VARIABLE + "}")
-    public Object buyItem(
-        @PathVariable(GAME_ID_PATH_VARIABLE) String gameId,
+    public ItemPurchaseResult buyItem(
+        @PathVariable(GAME_ID_PATH_VARIABLE) GameId gameId,
         @PathVariable(ITEM_ID_PATH_VARIABLE) String itemId
     ) {
         return gameService.buyItem(gameId, itemId);

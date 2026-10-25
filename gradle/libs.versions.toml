@@ -7,11 +7,19 @@ archunit = "1.5.1"
 pmd = "7.28.0"
 checkstyle = "14.3.0"
 jacoco = "0.8.15"
+wiremock = "3.13.2"
+jspecify = "1.0.1"
+tabletest = "1.2.2"
+tabletest-reporter = "1.5.0"
 
 [libraries]
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
+jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+tabletest-junit = { module = "org.tabletest:tabletest-junit", version.ref = "tabletest" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 dependency-updates = { id = "io.github.ben-manes.versions", version.ref = "dependency-updates" }
+tabletest-reporter = { id = "org.tabletest.reporter", version.ref = "tabletest-reporter" }

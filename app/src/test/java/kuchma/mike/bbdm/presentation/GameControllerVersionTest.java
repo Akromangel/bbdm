@@ -1,21 +1,22 @@
 package kuchma.mike.bbdm.presentation;
 
+import kuchma.mike.bbdm.domain.model.StartedGame;
 import kuchma.mike.bbdm.domain.port.GameGateway;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.tabletest.junit.TableTest;
 
-import java.util.Map;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -26,20 +27,44 @@ class GameControllerVersionTest {
     @MockitoBean
     private GameGateway gameGateway;
 
-    @Test
-    void declaresTheApiVersionOnTheControllerMapping() {
+    @TableTest("""
+        version
+        "1.0"
+        """)
+    void shouldDeclareTheApiVersionOnTheControllerMapping(String version) {
         RequestMapping mapping = GameController.class.getAnnotation(RequestMapping.class);
 
-        assertEquals("1.0", mapping.version());
-        assertEquals("/api", mapping.path()[0]);
+        assertThat(mapping.version()).isEqualTo(version);
+    }
+
+    @TableTest("""
+        path
+        "/api"
+        """)
+    void shouldDeclareTheApiPathOnTheControllerMapping(String path) {
+        RequestMapping mapping = GameController.class.getAnnotation(RequestMapping.class);
+
+        assertThat(mapping.path()[0]).isEqualTo(path);
     }
 
     @Test
-    void resolvesTheVersionFromTheApiVersionRequestHeader() throws Exception {
-        when(gameGateway.startGame()).thenReturn(Map.of("gameId", "game-1"));
+    void shouldResolveTheVersionFromTheApiVersionRequestHeader() throws Exception {
+        when(gameGateway.startGame()).thenReturn(new StartedGame("game-1", 3, 10, 1, 0, 0, 0));
 
-        mockMvc.perform(post("/api/game").header("API-Version", "1.0"))
-            .andExpect(status().isOk())
-            .andExpect(content().json("{\"gameId\":\"game-1\"}"));
+        MvcResult result = mockMvc.perform(post("/api/game").header("API-Version", "1.0"))
+            .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(HttpStatus.OK.value());
+    }
+
+    @Test
+    void shouldReturnTheStartedGamePayloadForTheApiVersionRequestHeader() throws Exception {
+        when(gameGateway.startGame()).thenReturn(new StartedGame("game-1", 3, 10, 1, 0, 0, 0));
+
+        MvcResult result = mockMvc.perform(post("/api/game").header("API-Version", "1.0"))
+            .andReturn();
+
+        assertThat(result.getResponse().getContentAsString())
+            .matches("(?s).*\"gameId\"\\s*:\\s*\"game-1\".*");
     }
 }
