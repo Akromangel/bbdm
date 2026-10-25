@@ -305,14 +305,18 @@ describe("visual adventure page", () => {
             await screen.findByRole("button", { name: "Buy" }),
         );
 
-        expect((await screen.findByRole("status")).textContent).toContain(
-            "Potion purchased.",
-        );
-        expect(api.purchaseItem).toHaveBeenCalledWith("game-1", {
-            id: "potion",
-            name: "Potion",
-            cost: 5,
+        const toast = await screen.findByRole("status");
+        const updatedGold = await screen.findByText("15");
+        expect({
+            toast: toast.textContent?.includes("Potion purchased."),
+            updatedGold: updatedGold.textContent,
+            purchase: api.purchaseItem.mock.calls[0],
+            shopRefreshes: api.fetchShop.mock.calls.length,
+        }).toEqual({
+            toast: true,
+            updatedGold: "15",
+            purchase: ["game-1", { id: "potion", name: "Potion", cost: 5 }],
+            shopRefreshes: 2,
         });
-        expect(api.fetchShop).toHaveBeenCalledTimes(2);
     });
 });

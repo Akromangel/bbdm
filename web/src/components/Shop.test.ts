@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { gameSession, resetGameSession } from "../lib/game-session";
 import Shop from "./Shop.svelte";
 
 const api = vi.hoisted(() => ({
@@ -18,9 +19,12 @@ const api = vi.hoisted(() => ({
 vi.mock("../lib/game-api", () => api);
 
 describe("shop component", () => {
-    const game = { gameId: "game-1", gold: 10 };
-
     beforeEach(() => {
+        resetGameSession();
+        gameSession.update((session) => ({
+            ...session,
+            game: { gameId: "game-1", gold: 10 },
+        }));
         api.fetchShop.mockResolvedValue([
             { id: "potion", name: "Potion", cost: 5 },
         ]);
@@ -32,14 +36,14 @@ describe("shop component", () => {
 
     afterEach(() => {
         cleanup();
+        resetGameSession();
         vi.clearAllMocks();
     });
 
     it("loads wares, completes a purchase, and refreshes the inventory", async () => {
-        const onGameUpdate = vi.fn();
         const onToast = vi.fn();
         render(Shop, {
-            props: { game, onGameUpdate, onToast, onGameOver: vi.fn() },
+            props: { onToast },
         });
 
         await fireEvent.click(
@@ -55,10 +59,6 @@ describe("shop component", () => {
             name: "Potion",
             cost: 5,
         });
-        expect(onGameUpdate).toHaveBeenCalledWith({
-            gold: 5,
-            message: "Potion purchased.",
-        });
         expect(onToast).toHaveBeenCalledWith("info", "Potion purchased.");
         expect(api.fetchShop).toHaveBeenCalledTimes(2);
     });
@@ -68,10 +68,7 @@ describe("shop component", () => {
         const onToast = vi.fn();
         render(Shop, {
             props: {
-                game,
-                onGameUpdate: vi.fn(),
                 onToast,
-                onGameOver: vi.fn(),
             },
         });
 

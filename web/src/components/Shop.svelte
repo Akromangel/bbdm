@@ -1,71 +1,52 @@
 <script lang="ts">
     import {
-        fetchShop,
-        purchaseItem,
-        ApiProblemError,
-        type ActionOutcome,
-        type GameState,
-        type ShopItem,
-    } from "../lib/game-api";
+        gameSession,
+        loadShop as fetchShopInventory,
+        purchaseShopItem,
+    } from "../lib/game-session";
+    import type { ShopItem } from "../lib/game-api";
     import type { ToastMessage } from "./Toaster.svelte";
 
-    export let game: GameState;
-    export let busy = false;
-    export let gameOver = false;
-    export let onGameUpdate: (outcome: ActionOutcome) => void;
     export let onToast: (type: ToastMessage["type"], message: string) => void;
-    export let onGameOver: () => void;
 
-    let shopItems: ShopItem[] = [];
     let showShop = false;
 
     function errorMessage(cause: unknown): string {
         return cause instanceof Error ? cause.message : String(cause);
     }
 
-    function markGameOver(cause: unknown) {
-        if (cause instanceof ApiProblemError && cause.status === 410) {
-            onGameOver();
-        }
-    }
-
     async function loadShop() {
         showShop = true;
         try {
-            shopItems = await fetchShop(game.gameId);
+            await fetchShopInventory();
         } catch (cause) {
-            markGameOver(cause);
             onToast("error", `The shop could not be loaded. ${errorMessage(cause)}`);
         }
     }
 
     async function buyItem(item: ShopItem) {
-        if (busy) {
+        if ($gameSession.busy) {
             return;
         }
-        busy = true;
         try {
-            const outcome = await purchaseItem(game.gameId, item);
-            onGameUpdate(outcome);
-            onToast("info", outcome.message ?? "Purchase complete.");
-            try {
-                shopItems = await fetchShop(game.gameId);
-            } catch (cause) {
+            const result = await purchaseShopItem(item);
+            if (!result) {
+                return;
+            }
+            onToast("info", result.outcome.message ?? "Purchase complete.");
+            if (result.refreshError !== undefined) {
                 onToast(
                     "error",
-                    `Your purchase was recorded, but the shop could not be refreshed. ${errorMessage(cause)}`,
+                    `Your purchase was recorded, but the shop could not be refreshed. ${errorMessage(result.refreshError)}`,
                 );
             }
         } catch (cause) {
-            markGameOver(cause);
             onToast("error", `The purchase could not be completed. ${errorMessage(cause)}`);
-        } finally {
-            busy = false;
         }
     }
 </script>
 
-<button class="shop-button" disabled={gameOver} on:click={loadShop}><span>◈</span> Visit the shop</button>
+<button class="shop-button" disabled={$gameSession.gameOver} on:click={loadShop}><span>◈</span> Visit the shop</button>
 
 {#if showShop}
     <div class="modal-backdrop" role="presentation"
@@ -74,15 +55,15 @@
             <button class="close-button" aria-label="Close shop" on:click={() => (showShop = false)}>×</button>
             <p class="eyebrow">A well-stocked merchant</p>
             <h2 id="shop-heading">The shop <span class="gold-symbol">◈</span></h2>
-            {#if shopItems.length}
+            {#if $gameSession.shopItems.length}
                 <div class="shop-grid">
-                    {#each shopItems as item}
+                    {#each $gameSession.shopItems as item}
                         <article class="shop-card">
                             <h3>{item.name ?? item.id}</h3>
                             <p class="item-price">{item.cost != null ? `${item.cost} gold` : "Price unavailable"}</p>
                             <button
                                 class="buy-button"
-                                disabled={gameOver || busy || item.cost == null || item.cost > (game.gold ?? 0)}
+                                disabled={$gameSession.gameOver || $gameSession.busy || item.cost == null || item.cost > ($gameSession.game?.gold ?? 0)}
                                 on:click={() => buyItem(item)}
                             >Buy</button>
                         </article>

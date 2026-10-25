@@ -3,47 +3,40 @@
     import Shop from "../components/Shop.svelte";
     import Toaster, {type ToastMessage} from "../components/Toaster.svelte";
     import {
-        type ActionOutcome,
+        gameSession,
+        resetGameSession,
+        resolveAdventureMessage,
+        startAdventure,
+    } from "../lib/game-session";
+    import {
         ApiProblemError,
-        fetchMessages,
-        type GameState,
         type Message,
         type ReputationGroup,
-        resolveMessage,
-        startGame,
     } from "../lib/game-api";
 
-    let game: GameState | null = null;
-    let messages: Message[] = [];
     let selectedMessage: Message | null = null;
-    let busy = false;
-    let gameOver = false;
     let toasts: ToastMessage[] = [];
     let nextToastId = 0;
     const toastTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
-    let hiddenMessageIds: Set<string> | undefined;
 
-    const statistics: { key: keyof GameState; label: string; icon: string }[] = [
+    const statistics = [
         {key: "lives", label: "Lives", icon: "♥"},
         {key: "gold", label: "Gold", icon: "◈"},
         {key: "level", label: "Level", icon: "⌁"},
         {key: "score", label: "Score", icon: "✦"},
         {key: "highScore", label: "Best", icon: "♛"},
         {key: "turn", label: "Day", icon: "↻"},
-    ];
+    ] as const;
     const reputations: ReputationGroup[] = ["people", "state", "underworld"];
 
     function errorMessage(cause: unknown): string {
         return cause instanceof Error ? cause.message : String(cause);
     }
 
-    function markGameOver(cause: unknown): boolean {
+    function closeMessageIfGameOver(cause: unknown) {
         if (cause instanceof ApiProblemError && cause.status === 410) {
-            gameOver = true;
             selectedMessage = null;
-            return true;
         }
-        return false;
     }
 
     function expirationTone(expiresIn: Message["expiresIn"]): "urgent" | "soon" | undefined {
@@ -72,115 +65,58 @@
         toastTimeouts.set(id, setTimeout(() => dismissToast(id), 5000));
     }
 
-    function hiddenMessages(): Set<string> {
-        if (hiddenMessageIds) {
-            return hiddenMessageIds;
-        }
-        const stored = sessionStorage.getItem("bbdm:hidden-message-ids");
-        const parsed: unknown = stored ? JSON.parse(stored) : [];
-        hiddenMessageIds = new Set(
-            Array.isArray(parsed)
-                ? parsed.filter((messageId): messageId is string => typeof messageId === "string")
-                : [],
-        );
-        return hiddenMessageIds;
-    }
-
-    function hideMessage(messageId: string) {
-        const hidden = hiddenMessages();
-        hidden.add(messageId);
-        sessionStorage.setItem("bbdm:hidden-message-ids", JSON.stringify([...hidden]));
-        messages = messages.filter((message) => message.adId !== messageId);
-    }
-
-    async function loadMessages(gameId: string) {
-        const loadedMessages = await fetchMessages(gameId);
-        const hidden = hiddenMessages();
-        messages = loadedMessages.filter((message) => !hidden.has(message.adId));
-    }
-
     onDestroy(() => {
         for (const timeout of toastTimeouts.values()) clearTimeout(timeout);
     });
 
     async function openAdventure() {
-        busy = true;
         try {
-            game = await startGame();
-            await loadMessages(game.gameId);
+            await startAdventure();
         } catch (cause) {
-            markGameOver(cause);
+            closeMessageIfGameOver(cause);
             showToast("error", `The adventure could not be started. ${errorMessage(cause)}`);
-        } finally {
-            busy = false;
-        }
-    }
-
-    async function refreshMessages() {
-        if (game) {
-            await loadMessages(game.gameId);
-        }
-    }
-
-    function updateGame(outcome: ActionOutcome) {
-        if (!game) {
-            return;
-        }
-        const update = outcome.game ?? outcome;
-        const previousLives = game.lives;
-        const updatedLives = update.lives;
-        game = {...game, ...update, gameId: update.gameId ?? game.gameId};
-
-        if (previousLives !== undefined && updatedLives !== undefined && updatedLives < previousLives) {
-            if (updatedLives === 2) {
-                showToast("info", "You have 2 lives left. Visit the shop and buy a Healing potion.");
-            } else if (updatedLives === 1) {
-                showToast("warning", "You have 1 life left. Visit the shop and buy a Healing potion.");
-            }
         }
     }
 
     async function dealWithMessage() {
-        if (!selectedMessage || !game || busy) {
+        if (!selectedMessage || !$gameSession.game || $gameSession.busy) {
             return;
         }
         const message = selectedMessage;
-        const currentGame = game;
-        busy = true;
         try {
-            const outcome = await resolveMessage(currentGame.gameId, message.adId);
-            updateGame(outcome);
+            const result = await resolveAdventureMessage(message.adId);
+            if (!result) {
+                return;
+            }
+            const {outcome, refreshError, lostLives} = result;
             const messageResult = outcome.message ?? outcome.result ?? "The message has been resolved.";
+            if (lostLives === 2) {
+                showToast("info", "You have 2 lives left. Visit the shop and buy a Healing potion.");
+            } else if (lostLives === 1) {
+                showToast("warning", "You have 1 life left. Visit the shop and buy a Healing potion.");
+            }
             showToast(
                 messageResult.includes("You failed on the mission!") ? "error" : "info",
                 messageResult,
             );
             selectedMessage = null;
-            try {
-                await refreshMessages();
-            } catch (cause) {
-                markGameOver(cause);
+            if (refreshError !== undefined) {
+                markGameOver(refreshError);
                 showToast(
                     "error",
-                    `Your response was recorded, but the messages could not be refreshed. ${errorMessage(cause)}`,
+                    `Your response was recorded, but the messages could not be refreshed. ${errorMessage(refreshError)}`,
                 );
             }
         } catch (cause) {
-            markGameOver(cause);
-            if (
-                cause instanceof ApiProblemError &&
-                cause.status === 400 &&
-                cause.messageId === message.adId
-            ) {
-                hideMessage(cause.messageId);
+            closeMessageIfGameOver(cause);
+            if (cause instanceof ApiProblemError && cause.status === 400 && cause.messageId === message.adId) {
                 selectedMessage = null;
             }
             showToast("error", `That action could not be completed. ${errorMessage(cause)}`);
-        } finally {
-            busy = false;
         }
     }
 
+    resetGameSession();
     openAdventure();
 </script>
 
@@ -194,10 +130,10 @@
             class="wordmark-sub">/ FIELD JOURNAL</span></a>
     </header>
 
-    {#if busy && !game}
+    {#if $gameSession.busy && !$gameSession.game}
         <section class="loading"><span class="spinner"></span>
             <p>Opening the field journal…</p></section>
-    {:else if game}
+    {:else if $gameSession.game}
         <section class="dashboard">
             <div class="dashboard-heading">
                 <div>
@@ -205,16 +141,11 @@
                     <h1>Field journal <span class="gold-symbol">✦</span></h1>
                 </div>
                 <Shop
-                    game={game}
-                    bind:busy
-                    {gameOver}
-                    onGameUpdate={updateGame}
                     onToast={showToast}
-                    onGameOver={() => (gameOver = true)}
                 />
             </div>
 
-            {#if gameOver}
+            {#if $gameSession.gameOver}
                 <p class="game-over-banner" role="alert">This game is over.</p>
             {/if}
 
@@ -223,7 +154,7 @@
                     <div class="stat-card">
                         <span class="stat-icon">{stat.icon}</span>
                         <span class="stat-label">{stat.label}</span>
-                        <strong>{game[stat.key] ?? 0}</strong>
+                        <strong>{$gameSession.game[stat.key] ?? 0}</strong>
                     </div>
                 {/each}
             </div>
@@ -233,7 +164,7 @@
                 <div class="reputation-grid">
                     {#each reputations as group}
                         <div class="reputation-item">
-                            <span>{group}</span><strong>{game.reputation?.[group] ?? 0}</strong></div>
+                            <span>{group}</span><strong>{$gameSession.game.reputation?.[group] ?? 0}</strong></div>
                     {/each}
                 </div>
             </section>
@@ -241,16 +172,16 @@
             <section class="notice-board">
                 <div class="board-heading">
                     <div><p class="eyebrow">Fresh from the kingdom</p>
-                        <h2>Messages <span class="count">{messages.length}</span></h2></div>
+                        <h2>Messages <span class="count">{$gameSession.messages.length}</span></h2></div>
                     <span class="board-hint">SELECT A SHEET TO RESPOND</span>
                 </div>
-                {#if messages.length}
+                {#if $gameSession.messages.length}
                     <div class="message-grid">
-                        {#each messages as message, index (message.adId)}
+                        {#each $gameSession.messages as message, index (message.adId)}
                             <button
                                 class="paper"
                                 class:paper-featured={index === 0}
-                                disabled={gameOver}
+                                disabled={$gameSession.gameOver}
                                 on:click={() => (selectedMessage = message)}
                                 aria-label={`Open message: ${message.message}`}
                             >
@@ -290,7 +221,7 @@
         </section>
     {:else}
         <section class="loading"><p>The adventure could not be opened.</p>
-            <button class="primary-button retry" on:click={openAdventure}>Try again</button>
+            <button class="primary-button retry" disabled={$gameSession.busy} on:click={openAdventure}>Try again</button>
         </section>
     {/if}
 
@@ -316,8 +247,8 @@
             </div>
             <p class="modal-prompt">Ready to resolve this task?</p>
             <div class="modal-actions">
-                <button class="primary-button" disabled={busy || gameOver}
-                        on:click={dealWithMessage}>{busy ? "Working…" : "Resolve the task"}</button>
+                <button class="primary-button" disabled={$gameSession.busy || $gameSession.gameOver}
+                        on:click={dealWithMessage}>{$gameSession.busy ? "Working…" : "Resolve the task"}</button>
             </div>
         </div>
     </div>
