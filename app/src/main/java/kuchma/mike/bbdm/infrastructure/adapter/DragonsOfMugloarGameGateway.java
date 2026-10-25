@@ -1,8 +1,8 @@
 package kuchma.mike.bbdm.infrastructure.adapter;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.Comparator;
 
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.GameMessage;
@@ -16,19 +16,16 @@ import kuchma.mike.bbdm.domain.model.ShopItem;
 import kuchma.mike.bbdm.domain.model.ShopItemId;
 import kuchma.mike.bbdm.domain.model.StartedGame;
 import kuchma.mike.bbdm.domain.port.GameGateway;
-import kuchma.mike.bbdm.application.MessageResolutionRejectedException;
-import kuchma.mike.bbdm.infrastructure.config.MessageFilterProperties;
+import kuchma.mike.bbdm.application.MessageFilterProperties;
 import kuchma.mike.bbdm.infrastructure.client.DragonsOfMugloarRestClient;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @Component
 public class DragonsOfMugloarGameGateway implements GameGateway {
     private final DragonsOfMugloarRestClient restClient;
+
     private final Set<String> filteredProbabilities;
 
     public DragonsOfMugloarGameGateway(
@@ -45,14 +42,11 @@ public class DragonsOfMugloarGameGateway implements GameGateway {
     }
 
     @Override
-    public MessageBoard getMessages(final GameId gameId) {
+    public MessageBoard getMessages(final GameId gameId, final Comparator<GameMessage> comparator) {
         List<GameMessage> messages = restClient.getMessages(gameId)
             .stream()
             .filter(message -> !hasFilteredProbability(message.probability()))
-            .sorted(
-                Comparator.comparingInt(GameMessage::expiresIn)
-                    .thenComparing(Comparator.comparingInt(GameMessage::reward).reversed())
-            )
+            .sorted(comparator)
             .toList();
         return new MessageBoard(messages);
     }
@@ -63,14 +57,7 @@ public class DragonsOfMugloarGameGateway implements GameGateway {
 
     @Override
     public MessageResolution dealWithMessage(final GameId gameId, final MessageId messageId) {
-        try {
-            return restClient.dealWithMessage(gameId, messageId);
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == BAD_REQUEST) {
-                throw new MessageResolutionRejectedException(messageId.value());
-            }
-            throw exception;
-        }
+        return restClient.dealWithMessage(gameId, messageId);
     }
 
     @Override

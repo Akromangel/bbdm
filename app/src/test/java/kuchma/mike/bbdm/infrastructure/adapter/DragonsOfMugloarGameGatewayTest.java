@@ -1,31 +1,44 @@
 package kuchma.mike.bbdm.infrastructure.adapter;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
-import kuchma.mike.bbdm.application.MessageResolutionRejectedException;
+import kuchma.mike.bbdm.application.MessageFilterProperties;
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.MessageId;
-import kuchma.mike.bbdm.infrastructure.config.MessageFilterProperties;
 import kuchma.mike.bbdm.infrastructure.client.DragonsOfMugloarRestClient;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpClientErrorException;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 class DragonsOfMugloarGameGatewayTest {
+    private static final String MESSAGE_ID = "ad-1";
+
+    private static final String BASE64_RISKY_PROBABILITY = "Umlza3k=";
+
     private static final GameId GAME_ID = new GameId("game-1");
+
     private static final List<String> FILTERED_PROBABILITIES = List.of("Impossible", "Suicide mission");
+
+    private static final List<String> PROBABILITY_ORDER = List.of(
+        "Piece of cake",
+        "Walk in the park",
+        "Sure thing",
+        "Quite likely",
+        "Hmmm...",
+        "Gamble",
+        "Rather detrimental",
+        "Suicide mission",
+        "Impossible"
+    );
 
     private final DragonsOfMugloarRestClient restClient = mock(DragonsOfMugloarRestClient.class);
 
@@ -37,20 +50,23 @@ class DragonsOfMugloarGameGatewayTest {
     @Test
     void shouldSortMessagesByExpirationAscendingAndThenRewardDescending() {
         final GameMessage lowerRewardSameExpiration =
-            new GameMessage(new MessageId("ad-1"), "Lower reward", 5, 4, "Umlza3k=", 0);
+            new GameMessage(new MessageId(MESSAGE_ID), "Lower reward", 5, 4, BASE64_RISKY_PROBABILITY, 0);
         final GameMessage highestReward =
-            new GameMessage(new MessageId("ad-2"), "Highest reward", 10, 4, "Umlza3k=", 0);
+            new GameMessage(new MessageId("ad-2"), "Highest reward", 10, 4, BASE64_RISKY_PROBABILITY, 0);
         final GameMessage longestExpiration =
-            new GameMessage(new MessageId("ad-3"), "Longest expiration", 1, 7, "Umlza3k=", 0);
+            new GameMessage(new MessageId("ad-3"), "Longest expiration", 1, 7, BASE64_RISKY_PROBABILITY, 0);
         final GameMessage shorterExpiration =
-            new GameMessage(new MessageId("ad-4"), "Shorter expiration", 100, 2, "Umlza3k=", 0);
+            new GameMessage(new MessageId("ad-4"), "Shorter expiration", 100, 2, BASE64_RISKY_PROBABILITY, 0);
         when(restClient.getMessages(GAME_ID)).thenReturn(
             List.of(lowerRewardSameExpiration, shorterExpiration, highestReward, longestExpiration)
         );
         final DragonsOfMugloarGameGateway gateway =
-            new DragonsOfMugloarGameGateway(restClient, new MessageFilterProperties(FILTERED_PROBABILITIES));
+            new DragonsOfMugloarGameGateway(
+                restClient,
+                new MessageFilterProperties(FILTERED_PROBABILITIES, PROBABILITY_ORDER)
+            );
 
-        final List<GameMessage> messages = gateway.getMessages(GAME_ID).messages();
+        final List<GameMessage> messages = gateway.getMessages(GAME_ID, defaultComparator()).messages();
         verify(restClient).getMessages(GAME_ID);
 
         assertThat(messages)
@@ -60,7 +76,7 @@ class DragonsOfMugloarGameGatewayTest {
     @Test
     void shouldFilterMessagesWithImpossibleProbability() {
         final GameMessage safeMessage =
-            new GameMessage(new MessageId("ad-1"), "Safe task", 10, 4, "Umlza3k=", 0);
+            new GameMessage(new MessageId(MESSAGE_ID), "Safe task", 10, 4, BASE64_RISKY_PROBABILITY, 0);
         final GameMessage alsoAcceptedMessage =
             new GameMessage(new MessageId("ad-4"), "Also accepted task", 5, 5, "U3VyZSB0aGluZw==", 0);
         final GameMessage detrimentalMessage =
@@ -85,9 +101,12 @@ class DragonsOfMugloarGameGatewayTest {
             )
         );
         final DragonsOfMugloarGameGateway gateway =
-            new DragonsOfMugloarGameGateway(restClient, new MessageFilterProperties(FILTERED_PROBABILITIES));
+            new DragonsOfMugloarGameGateway(
+                restClient,
+                new MessageFilterProperties(FILTERED_PROBABILITIES, PROBABILITY_ORDER)
+            );
 
-        final List<GameMessage> messages = gateway.getMessages(GAME_ID).messages();
+        final List<GameMessage> messages = gateway.getMessages(GAME_ID, defaultComparator()).messages();
         verify(restClient).getMessages(GAME_ID);
 
         assertThat(messages).containsExactly(
@@ -100,24 +119,40 @@ class DragonsOfMugloarGameGatewayTest {
     }
 
     @Test
-    void shouldTranslateAnUpstreamBadRequestWhenResolvingAMessage() {
-        when(restClient.dealWithMessage(GAME_ID, new MessageId("ad-1"))).thenThrow(
-            HttpClientErrorException.create(
-                HttpStatus.BAD_REQUEST,
-                "Bad Request",
-                HttpHeaders.EMPTY,
-                "<html><body><pre>Bad Request</pre></body></html>".getBytes(StandardCharsets.UTF_8),
-                StandardCharsets.UTF_8
-            )
-        );
+    void shouldSortByConfiguredProbabilityBeforeRewardWhenExpirationMatches() {
+        final GameMessage walkInThePark =
+            new GameMessage(new MessageId("prob-walk"), "Walk", 10, 2, "Walk in the park", 0);
+        final GameMessage pieceOfCake =
+            new GameMessage(new MessageId("prob-cake"), "Cake", 1, 2, "Piece of cake", 0);
+        final GameMessage sureThing =
+            new GameMessage(new MessageId("prob-sure"), "Sure", 100, 2, "Sure thing", 0);
+        when(restClient.getMessages(GAME_ID)).thenReturn(List.of(walkInThePark, sureThing, pieceOfCake));
         final DragonsOfMugloarGameGateway gateway =
-            new DragonsOfMugloarGameGateway(restClient, new MessageFilterProperties(FILTERED_PROBABILITIES));
-
-        assertThatThrownBy(() -> gateway.dealWithMessage(GAME_ID, new MessageId("ad-1")))
-            .isInstanceOfSatisfying(
-                MessageResolutionRejectedException.class,
-                exception -> assertThat(exception.messageId()).isEqualTo("ad-1")
+            new DragonsOfMugloarGameGateway(
+                restClient,
+                new MessageFilterProperties(FILTERED_PROBABILITIES, PROBABILITY_ORDER)
             );
-        verify(restClient).dealWithMessage(GAME_ID, new MessageId("ad-1"));
+
+        final List<GameMessage> messages = gateway.getMessages(GAME_ID, probabilityComparator()).messages();
+        verify(restClient).getMessages(GAME_ID);
+
+        assertThat(messages).containsExactly(pieceOfCake, walkInThePark, sureThing);
+    }
+
+    private static Comparator<GameMessage> defaultComparator() {
+        return Comparator.comparingInt(GameMessage::expiresIn)
+            .thenComparing(Comparator.comparingInt(GameMessage::reward).reversed());
+    }
+
+    private static Comparator<GameMessage> probabilityComparator() {
+        Map<String, Integer> ranks = new HashMap<>();
+        for (int index = 0; index < PROBABILITY_ORDER.size(); index++) {
+            ranks.put(PROBABILITY_ORDER.get(index), index);
+        }
+        return Comparator.comparingInt(GameMessage::expiresIn)
+            .thenComparingInt(message -> message.probability() == null
+                ? Integer.MAX_VALUE
+                : ranks.getOrDefault(message.probability(), Integer.MAX_VALUE))
+            .thenComparing(Comparator.comparingInt(GameMessage::reward).reversed());
     }
 }

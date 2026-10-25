@@ -1,5 +1,6 @@
 package kuchma.mike.bbdm.presentation;
 
+import kuchma.mike.bbdm.application.GameOverException;
 import kuchma.mike.bbdm.application.MessageResolutionRejectedException;
 
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,15 @@ public class ApiExceptionHandler {
         );
         problem.setTitle("Game Over");
         return ResponseEntity.status(exception.getStatusCode())
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(problem);
+    }
+
+    @ExceptionHandler(GameOverException.class)
+    public ResponseEntity<ProblemDetail> handleGameOver(final GameOverException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.GONE, exception.getMessage());
+        problem.setTitle("Game Over");
+        return ResponseEntity.status(HttpStatus.GONE)
             .contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .body(problem);
     }

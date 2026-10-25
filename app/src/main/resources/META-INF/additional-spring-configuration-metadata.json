@@ -1,9 +1,34 @@
 {
-  "properties": [
-    {
-      "name": "dragonsofmugloar.messages.filtered-probabilities",
-      "type": "java.util.List<java.lang.String>",
-      "description": "Probability values of messages to exclude from the message board."
-    }
-  ]
+    "properties": [
+        {
+            "name": "dragonsofmugloar.messages.filtered-probabilities",
+            "type": "java.util.List<java.lang.String>",
+            "description": "Probability values of messages to exclude from the message board."
+        },
+        {
+            "name": "dragonsofmugloar.messages.probability-order",
+            "type": "java.util.List<java.lang.String>",
+            "description": "Probability ordering used to prioritize messages."
+        },
+        {
+            "name": "dragonsofmugloar.scripting-adventure.last-life",
+            "type": "java.lang.Integer",
+            "description": "Life count at which the scripting adventure automatically buys a healing potion."
+        },
+        {
+            "name": "dragonsofmugloar.scripting-adventure.no-lives",
+            "type": "java.lang.Integer",
+            "description": "Life count at which the scripting adventure stops."
+        },
+        {
+            "name": "dragonsofmugloar.scripting-adventure.failed-missions-before-upgrades",
+            "type": "java.lang.Integer",
+            "description": "Consecutive failed missions before the scripting adventure buys upgrade items."
+        },
+        {
+            "name": "dragonsofmugloar.scripting-adventure.upgrade-items-to-buy",
+            "type": "java.lang.Integer",
+            "description": "Maximum number of upgrade items the scripting adventure buys after consecutive mission failures."
+        }
+    ]
 }

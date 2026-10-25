@@ -3,6 +3,7 @@
 - Backend: Java 25, Spring Boot 4, onion architecture (`presentation` → `application` → `domain`; `infrastructure`
   implements domain ports). Do not use Java `var`; PMD enforces explicit local variable types. Add or update tests with
   behavior changes; keep ArchUnit rules passing.
+- Keep methods at most 30 lines long.
 - Use Java text blocks for multiline string literals, including JSON test fixtures, instead of escaping embedded quotes.
 - Use `_` for unused Java parameters and local variables where the language permits unnamed variables.
 - Unit tests that use mocks must include an `@AfterEach` method that calls `verifyNoMoreInteractions` for every mock.

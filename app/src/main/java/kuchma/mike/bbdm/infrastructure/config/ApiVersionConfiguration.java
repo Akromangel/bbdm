@@ -14,9 +14,13 @@ public class ApiVersionConfiguration implements WebMvcConfigurer {
     public void configureApiVersioning(final ApiVersionConfigurer configurer) {
         configurer.useVersionResolver(request -> {
             final String path = request.getRequestURI().substring(request.getContextPath().length());
-            return path.equals(API_PREFIX) || path.startsWith(API_PREFIX + "/")
-                ? request.getHeader("API-Version")
-                : DEFAULT_FRONTEND_VERSION;
+            if (API_PREFIX.equals(path) || path.startsWith(API_PREFIX + "/")) {
+                final String headerVersion = request.getHeader("API-Version");
+                return headerVersion == null && path.endsWith("/events")
+                    ? request.getParameter("apiVersion")
+                    : headerVersion;
+            }
+            return DEFAULT_FRONTEND_VERSION;
         });
     }
 }

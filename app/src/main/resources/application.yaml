@@ -18,3 +18,18 @@ dragonsofmugloar:
         filtered-probabilities:
             - Impossible
             - Suicide mission
+        probability-order:
+            - Piece of cake
+            - Walk in the park
+            - Sure thing
+            - Quite likely
+            - Hmmm...
+            - Gamble
+            - Rather detrimental
+            - Impossible
+            - Suicide mission
+    scripting-adventure:
+        last-life: 2
+        no-lives: 0
+        failed-missions-before-upgrades: 3
+        upgrade-items-to-buy: 2

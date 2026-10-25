@@ -20,6 +20,20 @@ export interface Message {
     expiresIn?: string | number;
 }
 
+export interface ScriptingAdventureUpdate {
+    sessionId: string;
+    gold: number;
+    score: number;
+    lives: number;
+    level: number;
+    turn: number;
+    hpotCount: number;
+    task: string;
+    message: string;
+    complete: boolean;
+    error: string;
+}
+
 export interface ShopItem {
     id?: string;
     name?: string;
@@ -95,6 +109,15 @@ function getCollection<T>(
 
 export async function startGame(): Promise<GameState> {
     return request<GameState>("/api/game", { method: "POST" });
+}
+
+export async function startScriptingAdventureSession(
+    sessionId: string,
+): Promise<{ sessionId: string }> {
+    return request<{ sessionId: string }>(
+        `/api/scripting-adventure/sessions/${encodeURIComponent(sessionId)}`,
+        { method: "POST" },
+    );
 }
 
 export async function fetchMessages(gameId: string): Promise<Message[]> {

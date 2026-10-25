@@ -1,5 +1,7 @@
 package kuchma.mike.bbdm.infrastructure.client;
 
+import kuchma.mike.bbdm.application.GameOverException;
+import kuchma.mike.bbdm.application.MessageResolutionRejectedException;
 import kuchma.mike.bbdm.domain.model.GameId;
 import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.ItemId;
@@ -22,6 +24,7 @@ import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.absent;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
@@ -29,6 +32,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DragonsOfMugloarRestClientTest {
     private static final String GAME_ID = "game-1";
@@ -213,6 +217,42 @@ class DragonsOfMugloarRestClientTest {
     }
 
     @Test
+    void shouldTreatNotFoundAsGameOverForShopRequests() {
+        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/shop"))
+            .willReturn(aResponse().withStatus(404)));
+
+        final DragonsOfMugloarRestClient client = createClient();
+
+        assertThatThrownBy(() -> client.getShop(new GameId(GAME_ID)))
+            .isInstanceOf(GameOverException.class);
+    }
+
+    @Test
+    void shouldTreatGoneAsGameOverForMessageRequests() {
+        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))
+            .willReturn(aResponse().withStatus(410)));
+
+        final DragonsOfMugloarRestClient client = createClient();
+
+        assertThatThrownBy(() -> client.getMessages(new GameId(GAME_ID)))
+            .isInstanceOf(GameOverException.class);
+    }
+
+    @Test
+    void shouldTreatBadRequestWhileResolvingMessageAsRejected() {
+        wireMockServer.stubFor(post(urlEqualTo("/api/v2/" + GAME_ID + "/solve/ad-1"))
+            .willReturn(aResponse().withStatus(400)));
+
+        final DragonsOfMugloarRestClient client = createClient();
+
+        assertThatThrownBy(() -> client.dealWithMessage(new GameId(GAME_ID), new MessageId("ad-1")))
+            .isInstanceOfSatisfying(
+                MessageResolutionRejectedException.class,
+                exception -> assertThat(exception.messageId()).isEqualTo("ad-1")
+            );
+    }
+
+    @Test
     void shouldDeserializeThePurchaseResultResponse() {
         final String purchaseResponse =
             """
@@ -262,6 +302,7 @@ class DragonsOfMugloarRestClientTest {
         final RestClient restClient = RestClient.builder()
             .baseUrl(wireMockServer.baseUrl())
             .bufferContent((_, _) -> true)
+            .requestInterceptor(new GameOverInterceptor())
             .requestInterceptor(new UpstreamLoggingInterceptor())
             .build();
         final HttpServiceProxyFactory proxyFactory = HttpServiceProxyFactory

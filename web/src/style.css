@@ -522,6 +522,113 @@ button:disabled {
     font-size: 13px;
 }
 
+.scripting-dashboard {
+    min-height: calc(100vh - 130px);
+}
+
+.countdown {
+    display: grid;
+    justify-items: center;
+    gap: 5px;
+    color: #a9b2a6;
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.countdown strong {
+    color: var(--gold);
+    font:
+        500 52px / 1 "Playfair Display",
+        serif;
+}
+
+.adventure-status {
+    margin: 24px 0 0;
+    color: #bac4b8;
+    font-size: 13px;
+}
+
+.adventure-log {
+    margin-top: 48px;
+}
+
+.adventure-events {
+    display: grid;
+    gap: 11px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.adventure-event {
+    padding: 17px 19px;
+    border: 1px solid rgb(241 233 215 / 12%);
+    background: rgb(255 255 255 / 3%);
+}
+
+.event-heading,
+.event-state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.event-heading strong {
+    color: var(--paper);
+    font:
+        500 17px "Playfair Display",
+        serif;
+}
+
+.event-heading span,
+.event-state {
+    color: #9aa69a;
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.adventure-event p {
+    margin: 12px 0;
+    color: #c0c8be;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.adventure-event-newest p {
+    font-size: 24px;
+}
+
+.event-state {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.adventure-empty {
+    display: grid;
+    min-height: 160px;
+    margin-top: 16px;
+    place-content: center;
+    justify-items: center;
+    border: 1px dashed #506153;
+    color: #aab4a9;
+    font-size: 13px;
+}
+
+.adventure-empty span {
+    color: var(--gold);
+    font-size: 23px;
+}
+
+.adventure-empty p {
+    margin: 8px 0 0;
+}
+
 .spinner {
     width: 24px;
     height: 24px;
@@ -655,6 +762,10 @@ button:disabled {
         flex-direction: column;
     }
 
+    .countdown {
+        justify-items: start;
+    }
+
     .dashboard h1 {
         font-size: 34px;
     }
@@ -694,5 +805,10 @@ button:disabled {
 
     .game-footer span:last-child {
         display: none;
+    }
+
+    .event-heading {
+        align-items: start;
+        flex-direction: column;
     }
 }

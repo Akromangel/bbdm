@@ -1,8 +1,10 @@
 package kuchma.mike.bbdm.application;
 
+import java.util.Comparator;
 import java.util.List;
 
 import kuchma.mike.bbdm.domain.model.GameId;
+import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
 import kuchma.mike.bbdm.domain.model.MessageBoard;
 import kuchma.mike.bbdm.domain.model.MessageId;
@@ -12,6 +14,7 @@ import kuchma.mike.bbdm.domain.model.ShopItemId;
 import kuchma.mike.bbdm.domain.model.StartedGame;
 import kuchma.mike.bbdm.domain.port.GameGateway;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,7 +59,7 @@ class GameServiceTest {
     }
 
     private static final class RecordingGameGateway implements GameGateway {
-        private GatewayInteraction interaction;
+        private @Nullable GatewayInteraction interaction;
 
         @Override
         public StartedGame startGame() {
@@ -64,7 +67,7 @@ class GameServiceTest {
         }
 
         @Override
-        public MessageBoard getMessages(final GameId gameId) {
+        public MessageBoard getMessages(final GameId gameId, final Comparator<GameMessage> comparator) {
             return new MessageBoard(List.of());
         }
 
@@ -84,7 +87,7 @@ class GameServiceTest {
             return new ItemPurchaseResult(true, 5, 3, 1, 2);
         }
 
-        private GatewayInteraction interaction() {
+        private @Nullable GatewayInteraction interaction() {
             return interaction;
         }
     }

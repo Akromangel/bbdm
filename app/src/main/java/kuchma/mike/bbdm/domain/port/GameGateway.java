@@ -1,6 +1,9 @@
 package kuchma.mike.bbdm.domain.port;
 
+import java.util.Comparator;
+
 import kuchma.mike.bbdm.domain.model.GameId;
+import kuchma.mike.bbdm.domain.model.GameMessage;
 import kuchma.mike.bbdm.domain.model.ItemPurchaseResult;
 import kuchma.mike.bbdm.domain.model.MessageBoard;
 import kuchma.mike.bbdm.domain.model.MessageId;
@@ -12,7 +15,7 @@ import kuchma.mike.bbdm.domain.model.StartedGame;
 public interface GameGateway {
     StartedGame startGame();
 
-    MessageBoard getMessages(GameId gameId);
+    MessageBoard getMessages(GameId gameId, Comparator<GameMessage> comparator);
 
     MessageResolution dealWithMessage(GameId gameId, MessageId messageId);
 
