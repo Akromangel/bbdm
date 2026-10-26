@@ -1,6 +1,16 @@
+val prepareWeb = tasks.register<Exec>("prepareWeb") {
+    description = "Prepare web application"
+    group = "Docker"
+
+    workingDir = layout.projectDirectory.dir("web").asFile
+    commandLine("npm", "install")
+}
+
 val assembleWeb = tasks.register<Exec>("assembleWeb") {
     description = "Assembles web application"
     group = "Docker"
+
+    dependsOn(prepareWeb)
 
     workingDir = layout.projectDirectory.dir("web").asFile
     commandLine("npm", "run", "build")
@@ -14,7 +24,7 @@ val buildDockerImage = tasks.register<Exec>("buildDockerImage") {
     commandLine("docker", "build", "--tag", "bbdm", ".")
 }
 
-val runDockerContainer by tasks.register<Exec>("runDockerContainer") {
+val runDockerContainer = tasks.register<Exec>("runDockerContainer") {
     description = "Runs docker container"
     group = "Docker"
 
