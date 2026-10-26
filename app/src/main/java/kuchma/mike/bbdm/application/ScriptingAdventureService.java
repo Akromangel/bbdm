@@ -147,10 +147,10 @@ public class ScriptingAdventureService {
     }
 
     private String buyHealingPotion(final SessionContext context) {
-        final Optional<ItemPurchaseResult> purchaseResult = gameService.getShop(context.gameId()).items().stream()
+        final Optional<ItemPurchaseResult> purchaseResult = gameService.getShop(context.getGameId()).items().stream()
             .filter(item -> HPOT_ITEM_ID.equals(item.id().value()))
             .findFirst()
-            .map(item -> gameService.buyItem(context.gameId(), item.id().value()));
+            .map(item -> gameService.buyItem(context.getGameId(), item.id().value()));
         if (purchaseResult.isEmpty()) {
             return "Could not buy Healing pot";
         }
@@ -168,7 +168,7 @@ public class ScriptingAdventureService {
         final String potionUpdate
     ) {
         while (true) {
-            final MessageBoard messageBoard = gameService.getMessages(context.gameId(), messageComparator);
+            final MessageBoard messageBoard = gameService.getMessages(context.getGameId(), messageComparator);
             context.rejectedMessageIds.retainAll(
                 messageBoard.messages().stream().map(GameMessage::adId).toList()
             );
@@ -188,7 +188,7 @@ public class ScriptingAdventureService {
 
     private Optional<ResolvedMessage> tryResolveMessage(final SessionContext context, final GameMessage message) {
         try {
-            final MessageResolution resolution = gameService.dealWithMessage(context.gameId(), message.adId());
+            final MessageResolution resolution = gameService.dealWithMessage(context.getGameId(), message.adId());
             return Optional.of(new ResolvedMessage(message, resolution));
         } catch (final MessageResolutionRejectedException | RestClientException exception) {
             context.rejectedMessageIds.add(message.adId());
@@ -223,7 +223,7 @@ public class ScriptingAdventureService {
 
     private String buyUpgradeItems(final SessionContext context) {
         final UpgradePurchaseService.PurchaseOutcome outcome = upgradePurchaseService.buyRandomUpgradeItems(
-            context.gameId(),
+            context.getGameId(),
             gameState().gold,
             context.sessionId
         );
@@ -330,7 +330,7 @@ public class ScriptingAdventureService {
             this.sessionId = sessionId;
         }
 
-        private GameId gameId() {
+        private GameId getGameId() {
             final GameId currentGameId = gameId;
             if (currentGameId == null) {
                 throw new IllegalStateException("No game has been started for this session");

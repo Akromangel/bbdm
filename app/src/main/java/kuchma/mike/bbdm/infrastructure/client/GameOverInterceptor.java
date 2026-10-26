@@ -16,7 +16,7 @@ import org.springframework.web.client.HttpClientErrorException;
 
 public class GameOverInterceptor implements ClientHttpRequestInterceptor {
     private static HttpClientErrorException createCause(final ClientHttpResponse response) throws IOException {
-        try {
+        try (response) {
             return HttpClientErrorException.create(
                 response.getStatusCode(),
                 response.getStatusText(),
@@ -24,8 +24,6 @@ public class GameOverInterceptor implements ClientHttpRequestInterceptor {
                 response.getBody().readAllBytes(),
                 StandardCharsets.UTF_8
             );
-        } finally {
-            response.close();
         }
     }
 

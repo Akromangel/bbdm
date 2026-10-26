@@ -29,7 +29,8 @@ class GameServiceTest {
 
         gameService.dealWithMessage(new GameId(GAME_ID), new MessageId("message-1"));
 
-        assertThat(gateway.interaction())
+        assertThat(gateway.interaction)
+            .isNotNull()
             .returns(GAME_ID, GatewayInteraction::gameId)
             .returns("message-1", GatewayInteraction::messageId);
     }
@@ -85,10 +86,6 @@ class GameServiceTest {
         @Override
         public ItemPurchaseResult buyItem(final GameId gameId, final ShopItemId itemId) {
             return new ItemPurchaseResult(true, 5, 3, 1, 2);
-        }
-
-        private @Nullable GatewayInteraction interaction() {
-            return interaction;
         }
     }
 }

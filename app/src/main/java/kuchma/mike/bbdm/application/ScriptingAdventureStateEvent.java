@@ -21,6 +21,9 @@ public record ScriptingAdventureStateEvent(
         return new Builder();
     }
 
+    // It's a common pattern in builders to have method names the same as field names.
+    // So PMD is suppressed.
+    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName")
     public static final class Builder {
         private @Nullable String sessionId;
         private long gold;

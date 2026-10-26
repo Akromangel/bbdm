@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class ScriptingAdventureServiceTest {
     private static final String SESSION_ID = "session-1";
+    private static final String PIECE_OF_CAKE = "Piece of cake";
 
     private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 
@@ -49,7 +50,7 @@ class ScriptingAdventureServiceTest {
                     new ScriptingAdventureProperties(1, 0, 4, 2)
                 ),
                 new ScriptingAdventureProperties(1, 0, 4, 2),
-                new MessageFilterProperties(List.of(), List.of("Piece of cake")),
+                new MessageFilterProperties(List.of(), List.of(PIECE_OF_CAKE)),
                 eventPublisher
             );
 
@@ -98,7 +99,7 @@ class ScriptingAdventureServiceTest {
                     new ScriptingAdventureProperties(1, 0, 4, 2)
                 ),
                 new ScriptingAdventureProperties(1, 0, 4, 2),
-                new MessageFilterProperties(List.of(), List.of("Piece of cake")),
+                new MessageFilterProperties(List.of(), List.of(PIECE_OF_CAKE)),
                 eventPublisher
             );
 
@@ -147,7 +148,7 @@ class ScriptingAdventureServiceTest {
                     new ScriptingAdventureProperties(1, 0, 4, 2)
                 ),
                 new ScriptingAdventureProperties(1, 0, 4, 2),
-                new MessageFilterProperties(List.of(), List.of("Piece of cake")),
+                new MessageFilterProperties(List.of(), List.of(PIECE_OF_CAKE)),
                 eventPublisher
             );
 
@@ -235,11 +236,11 @@ class ScriptingAdventureServiceTest {
             final java.util.Comparator<GameMessage> comparator
         ) {
             final List<GameMessage> messages = new java.util.ArrayList<>(List.of(new GameMessage(
-                new MessageId("ad-1"), "Help the village", 15, 2, "Piece of cake", 0
+                new MessageId("ad-1"), "Help the village", 15, 2, PIECE_OF_CAKE, 0
             )));
             if (rejectFirstMessage || failFirstMessage) {
                 messages.add(new GameMessage(
-                    new MessageId("ad-2"), "Defend the village", 10, 3, "Piece of cake", 0
+                    new MessageId("ad-2"), "Defend the village", 10, 3, PIECE_OF_CAKE, 0
                 ));
             }
             return new MessageBoard(messages);
@@ -247,10 +248,10 @@ class ScriptingAdventureServiceTest {
 
         @Override
         public MessageResolution dealWithMessage(final GameId gameId, final MessageId messageId) {
-            if (failFirstMessage && messageId.value().equals("ad-1")) {
+            if (failFirstMessage && "ad-1".equals(messageId.value())) {
                 throw new RestClientException("Message resolution failed");
             }
-            if (rejectFirstMessage && messageId.value().equals("ad-1")) {
+            if (rejectFirstMessage && "ad-1".equals(messageId.value())) {
                 throw new MessageResolutionRejectedException(messageId.value());
             }
             return new MessageResolution(false, 0, 8, 25, 0, 5, "Quest completed.");

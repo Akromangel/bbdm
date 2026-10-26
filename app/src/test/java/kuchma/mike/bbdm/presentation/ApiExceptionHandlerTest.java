@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 
 import kuchma.mike.bbdm.application.MessageResolutionRejectedException;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,9 +25,11 @@ class ApiExceptionHandlerTest {
         );
 
         assertThat(response.getBody())
+            .isNotNull()
             .returns(HttpStatus.BAD_REQUEST.value(), ProblemDetail::getStatus)
             .returns("Message could not be resolved", ProblemDetail::getTitle)
-            .returns("ad-1", problem -> problem.getProperties().get("messageId"));
+            .extracting(ProblemDetail::getProperties, InstanceOfAssertFactories.map(String.class, String.class))
+            .containsEntry("messageId", "ad-1");
     }
 
     @Test

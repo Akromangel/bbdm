@@ -23,8 +23,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.absent;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.absent;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
@@ -51,6 +51,10 @@ class DragonsOfMugloarRestClientTest {
               "turn": 0
             }
             """;
+    private static final String API = "/api/v2/";
+    private static final String MESSAGES = "/messages";
+    private static final String MSG_ID_1 = "ad-1";
+    private static final String MSG_ID_2 = "ad-2";
 
     private WireMockServer wireMockServer;
 
@@ -85,7 +89,7 @@ class DragonsOfMugloarRestClientTest {
 
     @Test
     void shouldDeserializeTheReputationResponse() {
-        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/investigate/reputation"))
+        wireMockServer.stubFor(get(urlEqualTo(API + GAME_ID + "/investigate/reputation"))
             .willReturn(okJson("""
                 {
                   "people": 0.5,
@@ -98,7 +102,7 @@ class DragonsOfMugloarRestClientTest {
 
         assertThat(client.getReputation(new GameId(GAME_ID)))
             .satisfies(_ -> wireMockServer.verify(
-                getRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/investigate/reputation"))))
+                getRequestedFor(urlEqualTo(API + GAME_ID + "/investigate/reputation"))))
             .returns(0.5, Reputation::people)
             .returns(0.4, Reputation::state)
             .returns(0.3, Reputation::underworld);
@@ -106,7 +110,7 @@ class DragonsOfMugloarRestClientTest {
 
     @Test
     void shouldDeserializeTheMessageBoardResponse() {
-        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))
+        wireMockServer.stubFor(get(urlEqualTo(API + GAME_ID + MESSAGES))
             .willReturn(okJson(
                 """
                     [
@@ -130,16 +134,16 @@ class DragonsOfMugloarRestClientTest {
         final DragonsOfMugloarRestClient client = createClient();
 
         assertThat(client.getMessages(new GameId(GAME_ID)))
-            .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))))
+            .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo(API + GAME_ID + MESSAGES))))
             .containsExactly(
-                new GameMessage(new MessageId("ad-1"), "Task", 10, 3, "75%", 0),
-                new GameMessage(new MessageId("ad-2"), "Another task", 5, 4, null, 0)
+                new GameMessage(new MessageId(MSG_ID_1), "Task", 10, 3, "75%", 0),
+                new GameMessage(new MessageId(MSG_ID_2), "Another task", 5, 4, null, 0)
             );
     }
 
     @Test
     void shouldDecodeEncryptedMessageFields() {
-        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))
+        wireMockServer.stubFor(get(urlEqualTo(API + GAME_ID + MESSAGES))
             .willReturn(okJson("""
                 [
                   {
@@ -165,7 +169,7 @@ class DragonsOfMugloarRestClientTest {
 
     @Test
     void shouldSerializeTheDecisionAndDeserializeTheReply() {
-        wireMockServer.stubFor(post(urlEqualTo("/api/v2/" + GAME_ID + "/solve/ad-1"))
+        wireMockServer.stubFor(post(urlEqualTo(API + GAME_ID + "/solve/ad-1"))
             .willReturn(okJson(
                 """
                     {
@@ -182,8 +186,8 @@ class DragonsOfMugloarRestClientTest {
 
         final DragonsOfMugloarRestClient client = createClient();
 
-        assertThat(client.dealWithMessage(new GameId(GAME_ID), new MessageId("ad-1")))
-            .satisfies(_ -> wireMockServer.verify(postRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/solve/ad-1"))
+        assertThat(client.dealWithMessage(new GameId(GAME_ID), new MessageId(MSG_ID_1)))
+            .satisfies(_ -> wireMockServer.verify(postRequestedFor(urlEqualTo(API + GAME_ID + "/solve/ad-1"))
                 .withRequestBody(absent())))
             .returns(true, MessageResolution::success)
             .returns(3, MessageResolution::lives)
@@ -206,19 +210,19 @@ class DragonsOfMugloarRestClientTest {
                   }
                 ]
                 """;
-        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/shop"))
+        wireMockServer.stubFor(get(urlEqualTo(API + GAME_ID + "/shop"))
             .willReturn(okJson(shopResponse)));
 
         final DragonsOfMugloarRestClient client = createClient();
 
         assertThat(client.getShop(new GameId(GAME_ID)))
-            .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/shop"))))
+            .satisfies(_ -> wireMockServer.verify(getRequestedFor(urlEqualTo(API + GAME_ID + "/shop"))))
             .containsExactly(new ShopItem(new ItemId("item-1"), "Potion", 5));
     }
 
     @Test
     void shouldTreatNotFoundAsGameOverForShopRequests() {
-        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/shop"))
+        wireMockServer.stubFor(get(urlEqualTo(API + GAME_ID + "/shop"))
             .willReturn(aResponse().withStatus(404)));
 
         final DragonsOfMugloarRestClient client = createClient();
@@ -229,7 +233,7 @@ class DragonsOfMugloarRestClientTest {
 
     @Test
     void shouldTreatGoneAsGameOverForMessageRequests() {
-        wireMockServer.stubFor(get(urlEqualTo("/api/v2/" + GAME_ID + "/messages"))
+        wireMockServer.stubFor(get(urlEqualTo(API + GAME_ID + MESSAGES))
             .willReturn(aResponse().withStatus(410)));
 
         final DragonsOfMugloarRestClient client = createClient();
@@ -240,15 +244,15 @@ class DragonsOfMugloarRestClientTest {
 
     @Test
     void shouldTreatBadRequestWhileResolvingMessageAsRejected() {
-        wireMockServer.stubFor(post(urlEqualTo("/api/v2/" + GAME_ID + "/solve/ad-1"))
+        wireMockServer.stubFor(post(urlEqualTo(API + GAME_ID + "/solve/ad-1"))
             .willReturn(aResponse().withStatus(400)));
 
         final DragonsOfMugloarRestClient client = createClient();
 
-        assertThatThrownBy(() -> client.dealWithMessage(new GameId(GAME_ID), new MessageId("ad-1")))
+        assertThatThrownBy(() -> client.dealWithMessage(new GameId(GAME_ID), new MessageId(MSG_ID_1)))
             .isInstanceOfSatisfying(
                 MessageResolutionRejectedException.class,
-                exception -> assertThat(exception.messageId()).isEqualTo("ad-1")
+                exception -> assertThat(exception.messageId()).isEqualTo(MSG_ID_1)
             );
     }
 
@@ -264,14 +268,14 @@ class DragonsOfMugloarRestClientTest {
                   "turn": 2
                 }
                 """;
-        wireMockServer.stubFor(post(urlEqualTo("/api/v2/" + GAME_ID + "/shop/buy/item-1"))
+        wireMockServer.stubFor(post(urlEqualTo(API + GAME_ID + "/shop/buy/item-1"))
             .willReturn(okJson(purchaseResponse)));
 
         final DragonsOfMugloarRestClient client = createClient();
 
         assertThat(client.buyItem(new GameId(GAME_ID), new ItemId("item-1")))
             .satisfies(_ -> wireMockServer.verify(
-                postRequestedFor(urlEqualTo("/api/v2/" + GAME_ID + "/shop/buy/item-1"))))
+                postRequestedFor(urlEqualTo(API + GAME_ID + "/shop/buy/item-1"))))
             .returns(true, ItemPurchaseResult::shoppingSuccess)
             .returns(5L, ItemPurchaseResult::gold)
             .returns(3, ItemPurchaseResult::lives)

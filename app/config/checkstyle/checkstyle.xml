@@ -18,7 +18,9 @@
         <module name="ModifierOrder"/>
         <module name="NeedBraces"/>
         <module name="WhitespaceAround"/>
-        <module name="EmptyLineSeparator"/>
+        <module name="EmptyLineSeparator">
+            <property name="allowNoEmptyLineBetweenFields" value="true"/>
+        </module>
         <module name="RedundantModifier"/>
     </module>
 </module>
